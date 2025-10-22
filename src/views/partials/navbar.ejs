@@ -1,0 +1,79 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="<%= user ? '/dashboard' : '/' %>">
+      <i class="fas fa-envelope"></i> Email Classification
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <% if (user) { %>
+          <!-- Search -->
+          <li class="nav-item">
+            <form class="d-flex me-3" action="/emails/search" method="GET">
+              <input class="form-control form-control-sm" type="search" name="q" placeholder="Tìm kiếm email...">
+            </form>
+          </li>
+
+          <!-- Notifications -->
+          <li class="nav-item dropdown me-3">
+            <a class="nav-link" href="#" id="notificationDropdown" data-bs-toggle="dropdown">
+              <i class="fas fa-bell"></i>
+              <span class="badge bg-danger">3</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li>
+                <h6 class="dropdown-header">Thông báo</h6>
+              </li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+              <li><a class="dropdown-item" href="#">Email mới từ ABC</a></li>
+              <li><a class="dropdown-item" href="#">Email mới từ XYZ</a></li>
+            </ul>
+          </li>
+
+          <!-- User Menu -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-bs-toggle="dropdown">
+              <% if (user.avatar) { %>
+                <img src="<%= user.avatar %>" alt="Avatar" class="rounded-circle" width="30" height="30">
+                <% } else { %>
+                  <i class="fas fa-user-circle fa-lg"></i>
+                  <% } %>
+                    <%= user.username %>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="/settings">
+                  <i class="fas fa-cog"></i> Cài đặt
+                </a></li>
+              <li><a class="dropdown-item" href="/profile">
+                  <i class="fas fa-user"></i> Hồ sơ
+                </a></li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+              <li><a class="dropdown-item" href="/auth/logout">
+                  <i class="fas fa-sign-out-alt"></i> Đăng xuất
+                </a></li>
+            </ul>
+          </li>
+          <% } else { %>
+            <li class="nav-item">
+              <a class="nav-link" href="/auth/login">
+                <i class="fas fa-sign-in-alt"></i> Đăng nhập
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/auth/register">
+                <i class="fas fa-user-plus"></i> Đăng ký
+              </a>
+            </li>
+            <% } %>
+      </ul>
+    </div>
+  </div>
+</nav>

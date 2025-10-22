@@ -1,0 +1,195 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+  <h1 class="h2">Dashboard</h1>
+  <div class="btn-toolbar mb-2 mb-md-0">
+    <button type="button" class="btn btn-sm btn-outline-secondary">
+      <i class="fas fa-calendar"></i> This week
+    </button>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+  <div class="col-md-4">
+    <div class="card stat-card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="text-muted mb-1">Tổng Email</h6>
+            <h2 class="mb-0">
+              <%= stats.total %>
+            </h2>
+          </div>
+          <div class="stat-icon bg-primary">
+            <i class="fas fa-envelope"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card stat-card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="text-muted mb-1">Chưa đọc</h6>
+            <h2 class="mb-0">
+              <%= stats.unread %>
+            </h2>
+          </div>
+          <div class="stat-icon bg-warning">
+            <i class="fas fa-envelope-open"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card stat-card">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="text-muted mb-1">Đã đọc</h6>
+            <h2 class="mb-0">
+              <%= stats.read %>
+            </h2>
+          </div>
+          <div class="stat-icon bg-success">
+            <i class="fas fa-check-circle"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">Phân loại Email theo thời gian</h5>
+      </div>
+      <div class="card-body">
+        <canvas id="emailChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">Danh mục Email</h5>
+      </div>
+      <div class="card-body">
+        <canvas id="categoryChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Emails -->
+<div class="card">
+  <div class="card-header">
+    <h5 class="mb-0">Email gần đây</h5>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Người gửi</th>
+            <th>Tiêu đề</th>
+            <th>Danh mục</th>
+            <th>Ngày nhận</th>
+            <th>Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (recentEmails && recentEmails.length> 0) { %>
+            <% recentEmails.forEach(email=> { %>
+              <tr>
+                <td>
+                  <%= email.sender_email %>
+                </td>
+                <td>
+                  <a href="/emails/<%= email.id %>">
+                    <%= email.subject %>
+                  </a>
+                </td>
+                <td>
+                  <% if (email.label) { %>
+                    <span class="badge" data-bg="<%= email.label.color %>">
+                      <%= email.label.display_name %>
+                    </span>
+                    <% } %>
+                </td>
+                <td>
+                  <%= new Date(email.received_date).toLocaleDateString('vi-VN') %>
+                </td>
+                <td>
+                  <% if (email.is_read) { %>
+                    <span class="badge bg-success">Đã đọc</span>
+                    <% } else { %>
+                      <span class="badge bg-warning">Chưa đọc</span>
+                      <% } %>
+                </td>
+              </tr>
+              <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="5" class="text-center py-4">
+                      <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                      <p class="text-muted">Chưa có email nào</p>
+                    </td>
+                  </tr>
+                  <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Email Chart
+  const ctx = document.getElementById('emailChart');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
+      datasets: [{
+        label: 'Email nhận được',
+        data: [12, 19, 3, 5, 2, 3, 7],
+        borderColor: 'rgb(75, 192, 192)',
+        tension: 0.1
+      }]
+    }
+  });
+
+  // Category Chart
+  const ctx2 = document.getElementById('categoryChart');
+  new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+      labels: ['Inbox', 'Work', 'Personal', 'Spam'],
+      datasets: [{
+        data: [300, 150, 100, 50],
+        backgroundColor: [
+          'rgb(54, 162, 235)',
+          'rgb(75, 192, 192)',
+          'rgb(255, 205, 86)',
+          'rgb(255, 99, 132)'
+        ]
+      }]
+    }
+  });
+</script>
+
+<script>
+  document.querySelectorAll('.badge[data-bg]').forEach(function (el) {
+    var color = el.getAttribute('data-bg');
+    if (color) el.style.backgroundColor = color;
+  });
+</script>
