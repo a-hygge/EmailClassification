@@ -1,10 +1,6 @@
 import { Router } from 'express';
 const router = Router();
 import { index, getByLabel, show, markAsRead, toggleImportant } from '../controllers/emailController.js';
-import { isAuthenticated } from '../middlewares/authMiddleware.js';
-
-// Tất cả routes cần authentication
-router.use(isAuthenticated);
 
 // GET /emails - Danh sách tất cả email
 router.get('/', index);

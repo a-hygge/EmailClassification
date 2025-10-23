@@ -9,8 +9,6 @@ import {
 } from '../controllers/authController.js';
 
 const router = Router();
-// const { validateLogin, validateRegister } = require('../middlewares/validationMiddleware');
-// const { isGuest, isAuthenticated } = require('../middlewares/authMiddleware');
 
 // GET /auth/login - Hiển thị form login
 router.get('/login', showLoginPage);
