@@ -134,7 +134,8 @@ class DashboardController {
         chartData: {
           days: last7Days,
           counts: emailsByDay
-        }
+        },
+        selectedLabel: null
       });
 
     } catch (error) {
