@@ -270,16 +270,22 @@ body {
 /* Table Styles */
 .table {
   font-size: 0.9rem;
+  background-color: white;
+  color: #000;
 }
 
 .table thead th {
   border-bottom: 2px solid #e5e7eb;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  background-color: white;
+  color: #000;
 }
 
 .table tbody tr {
   border-bottom: 1px solid #f3f4f6;
+  background-color: white;
+  color: #000;
 }
 
 .table tbody tr:last-child {
@@ -287,7 +293,21 @@ body {
 }
 
 .table tbody tr:hover {
-  background-color: #f9fafb;
+  background-color: #f3f4f6 !important;
+  color: #000;
+}
+
+.table td {
+  background-color: transparent;
+  color: #000;
+}
+
+.table-primary {
+  background-color: white !important;
+}
+
+.table-primary.bg-opacity-10 {
+  background-color: white !important;
 }
 
 /* Badges */

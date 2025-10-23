@@ -28,7 +28,7 @@ class DashboardController {
         }
       });
 
-      // ===== LẤY TẤT CẢ LABELS VỚI SỐ LƯỢNG EMAIL =====
+      // LẤY TẤT CẢ LABELS VỚI SỐ LƯỢNG EMAIL
       const labels = await Label.findAll({
         include: [
           {
@@ -59,7 +59,7 @@ class DashboardController {
         };
       });
 
-      // ===== LẤY EMAILS GẦN ĐÂY =====
+      //LẤY EMAILS GẦN ĐÂY 
       const recentEmails = await EmailRecipient.findAll({
         where: { userId },
         include: [
@@ -70,6 +70,11 @@ class DashboardController {
               {
                 model: Label,
                 as: 'Label'
+              },
+              {
+                model: User,
+                as: 'user',
+                attributes: ['id', 'username']
               }
             ]
           }
@@ -117,17 +122,21 @@ class DashboardController {
         emailsByDay.push(count);
       }
 
+      const stats = {
+        total: totalEmails,
+        unread: unreadEmails,
+        read: totalEmails - unreadEmails,
+        important: importantEmails
+      }
+
+      req.session.stats = stats;
+      req.session.labelsWithCount = labelsWithCount;
       // ===== RENDER VIEW =====
       res.render('pages/dashboard/index', {
         title: 'Dashboard - Email Classification System',
         layout: 'layouts/main',
         currentPage: 'dashboard',
-        stats: {
-          total: totalEmails,
-          unread: unreadEmails,
-          read: totalEmails - unreadEmails,
-          important: importantEmails
-        },
+        stats: stats,
         labels: labelsWithCount,
         recentEmails,
         labelStats: labelStatsMap,

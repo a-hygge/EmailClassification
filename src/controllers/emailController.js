@@ -7,6 +7,7 @@ class EmailController {
 
   // GET /emails - Danh sách tất cả email
   async index(req, res) {
+    const stats = req.session.stats || {};
     try {
       const userId = req.session.user.id;
       const page = parseInt(req.query.page) || 1;
@@ -24,6 +25,11 @@ class EmailController {
               {
                 model: Label,
                 as: 'Label'
+              },
+              {
+                model: User,
+                as: 'user',
+                attributes: ['id', 'username']
               }
             ]
           }
@@ -64,6 +70,7 @@ class EmailController {
         currentPage: 'emails',
         emails: emailRecipients,
         labels: labelsWithCount,
+        stats: stats,
         pagination: {
           currentPage: page,
           totalPages: Math.ceil(count / limit),

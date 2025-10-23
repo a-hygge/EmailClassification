@@ -13,14 +13,14 @@
     <div class="collapse navbar-collapse" id="navbarNav">
       <% if (user) { %>
         <!-- Search Form -->
-        <form class="d-flex mx-auto" style="max-width: 500px; width: 100%;" action="/emails/search" method="GET">
+        <!-- <form class="d-flex mx-auto" style="max-width: 500px; width: 100%;" action="/emails/search" method="GET">
           <div class="input-group">
             <span class="input-group-text bg-white border-end-0">
               <i class="fas fa-search text-muted"></i>
             </span>
             <input class="form-control border-start-0 ps-0" type="search" name="q" placeholder="Tìm kiếm email...">
           </div>
-        </form>
+        </form> -->
 
         <!-- Right Menu -->
         <ul class="navbar-nav ms-auto align-items-center">
@@ -32,7 +32,7 @@
           </li>
 
           <!-- Notifications -->
-          <li class="nav-item dropdown me-3">
+          <!-- <li class="nav-item dropdown me-3">
             <a class="nav-link position-relative" href="#" id="notificationDropdown" data-bs-toggle="dropdown">
               <i class="fas fa-bell fs-5"></i>
               <% if (typeof stats !=='undefined' && stats.unread> 0) { %>
@@ -60,7 +60,7 @@
                 </a>
               </li>
             </ul>
-          </li>
+          </li> -->
 
           <!-- User Dropdown -->
           <li class="nav-item dropdown">
@@ -90,7 +90,7 @@
               <li>
                 <hr class="dropdown-divider">
               </li>
-              <li>
+              <!-- <li>
                 <a class="dropdown-item" href="/profile">
                   <i class="fas fa-user me-2"></i> Hồ sơ
                 </a>
@@ -99,7 +99,7 @@
                 <a class="dropdown-item" href="/settings">
                   <i class="fas fa-cog me-2"></i> Cài đặt
                 </a>
-              </li>
+              </li> -->
               <li>
                 <hr class="dropdown-divider">
               </li>
