@@ -132,7 +132,7 @@ class DashboardController {
       req.session.stats = stats;
       req.session.labelsWithCount = labelsWithCount;
       // ===== RENDER VIEW =====
-      res.render('pages/dashboard/index', {
+      res.render('pages/dashboard/dashboard', {
         title: 'Dashboard - Email Classification System',
         layout: 'layouts/main',
         currentPage: 'dashboard',

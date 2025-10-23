@@ -15,6 +15,11 @@ class EmailSystemController {
       const { count, rows: emailRecipients } = await EmailRecipient.findAndCountAll({
         include: [
           {
+            model: User,
+            as: 'user',
+            attributes: ['id', 'username']
+          },
+          {
             model: Email,
             as: 'email',
             include: [
@@ -35,8 +40,7 @@ class EmailSystemController {
         order: [['sendTime', 'DESC']]
       });
 
-
-      res.render('pages/emails/index', {
+      res.render('pages/emails/emailsSystem', {
         title: 'Email System - Email Classification System',
         layout: 'layouts/main',
         currentPage: 'emailsSystem',

@@ -6,13 +6,8 @@
       <div class="d-flex justify-content-between align-items-center">
         <div>
           <h2 class="fw-bold mb-1">
-            <% if (selectedLabel) { %>
-              <i class="fas fa-tag me-2 text-primary"></i>
-              <%= selectedLabel.name %>
-                <% } else { %>
-                  <i class="fas fa-inbox me-2 text-primary"></i>
-                  Tất cả Email
-                  <% } %>
+            <i class="fas fa-inbox me-2 text-primary"></i>
+            Tất cả Email Hệ Thống
           </h2>
           <p class="text-muted mb-0">
             <small>
@@ -22,16 +17,6 @@
             </small>
           </p>
         </div>
-        <!-- <div>
-          <button class="btn btn-outline-primary me-2">
-            <i class="fas fa-filter me-1"></i>
-            Bộ lọc
-          </button>
-          <button class="btn btn-primary" id="syncEmailsBtn">
-            <i class="fas fa-sync-alt me-1"></i>
-            Đồng bộ
-          </button>
-        </div> -->
       </div>
     </div>
   </div>
@@ -84,6 +69,7 @@
                   <th class="border-0 ps-4" style="width: 40px;"></th>
                   <th class="border-0" style="width: 50px;"></th>
                   <th class="border-0">Người gửi</th>
+                  <th class="border-0">Người nhận</th>
                   <th class="border-0">Tiêu đề</th>
                   <th class="border-0">Danh mục</th>
                   <th class="border-0">Thời gian</th>
@@ -111,8 +97,20 @@
                             <%= email.user?.username ? email.user?.username.charAt(0).toUpperCase() : 'U' %>
                           </div>
                           <div>
-                            <div class="<%= !email.is_read ? 'fw-bold' : '' %>">
+                            <div>
                               <%= email.user?.username || 'Unknown' %>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="align-middle">
+                        <div class="d-flex align-items-center">
+                          <div class="avatar-circle me-2 bg-success">
+                            <%= recipient.user?.username ? recipient.user?.username.charAt(0).toUpperCase() : 'R' %>
+                          </div>
+                          <div>
+                            <div>
+                              <%= recipient.user?.username || 'Recipient' %>
                             </div>
                           </div>
                         </div>
@@ -120,13 +118,7 @@
                       <td class="align-middle">
                         <div class="text-truncate" style="max-width: 400px;">
                           <a href="/emails/<%= email.id %>" class="text-decoration-none text-dark">
-                            <% if (!email.is_read) { %>
-                              <strong>
-                                <%= email.title || 'No Subject' %>
-                              </strong>
-                              <% } else { %>
-                                <%= email.title || 'No Subject' %>
-                                  <% } %>
+                            <%= email.title || 'No Subject' %>
                           </a>
                           <% if (email.body) { %>
                             <br>
@@ -182,19 +174,9 @@
                     <% }); %>
                       <% } else { %>
                         <tr>
-                          <td colspan="7" class="text-center py-5">
+                          <td colspan="8" class="text-center py-5">
                             <i class="fas fa-inbox fa-3x text-muted mb-3 d-block"></i>
-                            <p class="text-muted mb-2 h5">
-                              <% if (selectedLabel) { %>
-                                Không có email nào trong danh mục "<%= selectedLabel.name %>"
-                                  <% } else { %>
-                                    Chưa có email nào
-                                    <% } %>
-                            </p>
-                            <!-- <button class="btn btn-primary" id="emptyStateSync">
-                              <i class="fas fa-sync-alt me-2"></i>
-                              Đồng bộ email ngay
-                            </button> -->
+                            <p class="text-muted mb-2 h5">Chưa có email nào</p>
                           </td>
                         </tr>
                         <% } %>
@@ -292,22 +274,5 @@
         console.log('Delete email:', emailId);
       }
     });
-  });
-
-  // Sync emails button
-  document.getElementById('syncEmailsBtn')?.addEventListener('click', function () {
-    this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Đang đồng bộ...';
-    this.disabled = true;
-    // Implement sync functionality
-    setTimeout(() => {
-      this.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Đồng bộ';
-      this.disabled = false;
-    }, 2000);
-  });
-
-  document.getElementById('emptyStateSync')?.addEventListener('click', function () {
-    this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Đang đồng bộ...';
-    this.disabled = true;
-    // Implement sync functionality
   });
 </script>

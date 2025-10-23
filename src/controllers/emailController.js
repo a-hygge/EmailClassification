@@ -64,7 +64,7 @@ class EmailController {
         })
       );
 
-      res.render('pages/emails/index', {
+      res.render('pages/emails/emails', {
         title: 'Hộp thư - Email Classification System',
         layout: 'layouts/main',
         currentPage: 'emails',
@@ -106,6 +106,11 @@ class EmailController {
               {
                 model: Label,
                 as: 'Label'
+              },
+              {
+                model: User,
+                as: 'user',
+                attributes: ['id', 'username']
               }
             ]
           }
@@ -142,7 +147,7 @@ class EmailController {
       // Lấy thông tin label đang được chọn
       const selectedLabel = await Label.findByPk(labelId);
 
-      res.render('pages/emails/index', {
+      res.render('pages/emails/emails', {
         title: `${selectedLabel.name} - Email Classification System`,
         layout: 'layouts/main',
         currentPage: 'emails',
@@ -167,6 +172,7 @@ class EmailController {
     try {
       const userId = req.session.user.id;
       const emailId = parseInt(req.params.id);
+      const stats = req.session.stats || {};
 
       const emailRecipient = await EmailRecipient.findOne({
         where: {
@@ -201,11 +207,13 @@ class EmailController {
         await emailRecipient.update({ isRead: 1 });
       }
 
-      res.render('pages/emails/detail', {
+      res.render('pages/emails/emailDetail', {
         title: emailRecipient.email.title,
         layout: 'layouts/main',
         currentPage: 'emails',
-        emailRecipient
+        emailRecipient,
+        stats: stats,
+        selectedLabel: null
       });
 
     } catch (error) {

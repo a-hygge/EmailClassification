@@ -171,7 +171,7 @@
                       <%= email.user?.username ? email.user?.username.charAt(0).toUpperCase() : 'U' %>
                     </div>
                     <div>
-                      <div class="<%= !email.is_read ? 'fw-bold' : '' %>">
+                      <div class="<%= !recipient.isRead ? 'fw-bold' : '' %>">
                         <%= email.user?.username || 'Unknown' %>
                       </div>
                     </div>
@@ -179,14 +179,9 @@
                 </td>
                 <td class="align-middle">
                   <div class="text-truncate" style="max-width: 300px;">
-                    <a href="/emails/<%= email.id %>" class="text-decoration-none text-dark">
-                      <% if (!email.is_read) { %>
-                        <strong>
-                          <%= email.title || 'No Subject' %>
-                        </strong>
-                        <% } else { %>
-                          <%= email.title || 'No Subject' %>
-                            <% } %>
+                    <a href="/emails/<%= email.id %>"
+                      class="text-decoration-none text-dark <%= !recipient.isRead ? 'fw-bold' : '' %>">
+                      <%= email.title || 'No Subject' %>
                     </a>
                   </div>
                 </td>

@@ -387,6 +387,10 @@ body {
   flex-shrink: 0;
 }
 
+.avatar-circle.bg-success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+}
+
 /* Email Table Enhancements */
 .table .btn-group .btn {
   padding: 0.25rem 0.5rem;
