@@ -83,16 +83,15 @@ class DashboardController {
         limit: 10
       });
 
-      // ===== THỐNG KÊ THEO LABEL =====
-      const labelStatsMap = {};
+      // const labelStatsMap = {};
 
-      for (const label of labels) {
-        let count = 0;
-        for (const email of label.emails) {
-          count += email.recipients.length;
-        }
-        labelStatsMap[label.name] = count;
-      }
+      // for (const label of labels) {
+      //   let count = 0;
+      //   for (const email of label.emails) {
+      //     count += email.recipients.length;
+      //   }
+      //   labelStatsMap[label.name] = count;
+      // }
 
       // ===== THỐNG KÊ THEO NGÀY (7 ngày gần đây) =====
       const last7Days = [];
@@ -139,7 +138,7 @@ class DashboardController {
         stats: stats,
         labels: labelsWithCount,
         recentEmails,
-        labelStats: labelStatsMap,
+        // labelStats: labelStatsMap,
         chartData: {
           days: last7Days,
           counts: emailsByDay
