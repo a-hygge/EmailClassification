@@ -93,6 +93,7 @@ class EmailController {
       const page = parseInt(req.query.page) || 1;
       const limit = 20;
       const offset = (page - 1) * limit;
+      const stats = req.session.stats || {};
 
       // Lấy email theo label
       const { count, rows: emailRecipients } = await EmailRecipient.findAndCountAll({
@@ -153,6 +154,7 @@ class EmailController {
         currentPage: 'emails',
         emails: emailRecipients,
         labels: labelsWithCount,
+        stats: stats,
         pagination: {
           currentPage: page,
           totalPages: Math.ceil(count / limit),
@@ -166,6 +168,63 @@ class EmailController {
       res.status(500).send('Server Error');
     }
   }
+
+  // GET/emails/important - Danh sách email quan trọng
+  async getImportantEmails(req, res) {
+    try {
+      const userId = req.session.user.id;
+      const page = parseInt(req.query.page) || 1;
+      const limit = 20;
+      const offset = (page - 1) * limit;
+      const stats = req.session.stats || {};
+      const labelsWithCount = req.session.labelsWithCount || [];
+
+      const { count, rows: emailRecipients } = await EmailRecipient.findAndCountAll({
+        where: {
+          userId,
+          isImportant: 1
+        },
+        include: [
+          {
+            model: Email,
+            as: 'email',
+            include: [
+              {
+                model: Label,
+                as: 'Label'
+              },
+              {
+                model: User,
+                as: 'user',
+                attributes: ['id', 'username']
+              }
+            ]
+          }
+        ],
+        limit,
+        offset,
+        order: [['sendTime', 'DESC']]
+      });
+      res.render('pages/emails/emails', {
+        title: 'Email Quan Trọng - Email Classification System',
+        layout: 'layouts/main',
+        currentPage: 'ImportantEmails',
+        emails: emailRecipients,
+        stats: stats,
+        selectedLabel: null,
+        labels: labelsWithCount,
+        pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(count / limit),
+          totalEmails: count
+        }
+      });
+    } catch (error) {
+      console.error('Important emails error:', error);
+      res.status(500).send('Server Error');
+    }
+  }
+
 
   // GET /emails/:id - Chi tiết email
   async show(req, res) {
@@ -330,7 +389,8 @@ export const {
   show,
   markAsRead,
   toggleImportant,
-  deleteEmail
+  deleteEmail,
+  getImportantEmails
 } = emailController;
 
 export default emailController;

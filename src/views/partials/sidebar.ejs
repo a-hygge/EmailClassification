@@ -25,7 +25,7 @@
 
       <!-- Important Emails -->
       <li class="nav-item">
-        <a class="nav-link" href="/emails?important=1">
+        <a class="nav-link <%= currentPage === 'ImportantEmails' ? 'active' : '' %>" href="/emails/important">
           <i class="fas fa-star me-2 text-warning"></i>
           <span>Quan trọng</span>
           <!-- <% if (typeof stats !=='undefined' && stats.important> 0) { %>
