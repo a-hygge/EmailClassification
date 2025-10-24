@@ -232,6 +232,7 @@ class EmailController {
       const userId = req.session.user.id;
       const emailId = parseInt(req.params.id);
       const stats = req.session.stats || {};
+      const labelsWithCount = req.session.labelsWithCount || [];
 
       const emailRecipient = await EmailRecipient.findOne({
         where: {
@@ -271,6 +272,7 @@ class EmailController {
         layout: 'layouts/main',
         currentPage: 'emails',
         emailRecipient,
+        labels: labelsWithCount,
         stats: stats,
         selectedLabel: null
       });

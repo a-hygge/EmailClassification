@@ -312,6 +312,12 @@
                 emailRow.remove();
               }
 
+              // Update total email count
+              const totalElement = document.querySelector('strong');
+              if (totalElement) {
+                const currentTotal = parseInt(totalElement.textContent);
+                totalElement.textContent = currentTotal - 1;
+              }
               // Show success toast
               const toastEl = document.getElementById('deleteToast');
               const toast = new bootstrap.Toast(toastEl, {

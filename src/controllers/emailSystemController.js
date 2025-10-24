@@ -65,6 +65,7 @@ class EmailSystemController {
     try {
       const emailId = parseInt(req.params.id);
       const stats = req.session.stats || {};
+      const labelsWithCount = req.session.labelsWithCount || [];
       const emailRecipient = await EmailRecipient.findOne({
         where: {
           emailId
@@ -98,6 +99,7 @@ class EmailSystemController {
         emailRecipient,
         currentPage: 'emailsSystem',
         stats: stats,
+        labels: labelsWithCount,
         selectedLabel: null
       });
     } catch (error) {
