@@ -1,6 +1,6 @@
 import { Router } from 'express';
 const router = Router();
-import { index, getByLabel, show, markAsRead, toggleImportant } from '../controllers/emailController.js';
+import { index, getByLabel, show, markAsRead, toggleImportant, deleteEmail } from '../controllers/emailController.js';
 
 // GET /emails - Danh sách tất cả email
 router.get('/', index);
@@ -17,7 +17,7 @@ router.put('/:id/read', markAsRead);
 // PUT /emails/:id/important - Đánh dấu quan trọng
 router.put('/:id/important', toggleImportant);
 
-// DELETE /emails/:id - Xóa email
-// router.delete('/:id', emailController.delete);
+// DELETE /emails/:emailId - Xóa email
+router.delete('/:emailId', deleteEmail);
 
 export default router;

@@ -274,6 +274,52 @@ class EmailController {
       res.status(500).json({ success: false, message: 'Server error' });
     }
   }
+
+  // DELETE /emails/:emailId - Xoá email
+  async deleteEmail(req, res) {
+    const transaction = await db.sequelize.transaction();
+    try {
+      const emailId = parseInt(req.params.emailId);
+      const userId = req.session.user.id;
+
+      // Xoá bản ghi trong EmailRecipient
+      const emailRecipient = await EmailRecipient.findOne({
+        where: { emailId, userId }
+      });
+
+      if (!emailRecipient) {
+        await transaction.rollback();
+        return res.status(404).json({ success: false, message: 'Email not found' });
+      }
+
+      // Xóa trong EmailRecipient trước
+      await EmailRecipient.destroy({
+        where: { emailId },
+        transaction: transaction
+      });
+
+      // Sau đó xóa email gốc (nếu không còn người nhận nào khác)
+      const remainingRecipients = await EmailRecipient.count({
+        where: { emailId },
+        transaction: transaction
+      });
+
+      if (remainingRecipients === 0) {
+        await Email.destroy({
+          where: { id: emailId },
+          transaction: transaction
+        });
+      }
+
+      await transaction.commit();
+      res.json({ success: true, message: 'Email đã được xóa thành công' });
+    }
+    catch (error) {
+      await transaction.rollback();
+      console.error('Delete email error:', error);
+      res.status(500).json({ success: false, message: 'Server error khi xóa email' });
+    }
+  }
 }
 
 const emailController = new EmailController();
@@ -283,7 +329,8 @@ export const {
   getByLabel,
   show,
   markAsRead,
-  toggleImportant
+  toggleImportant,
+  deleteEmail
 } = emailController;
 
 export default emailController;

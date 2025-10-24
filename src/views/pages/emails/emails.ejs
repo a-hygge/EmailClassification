@@ -1,5 +1,20 @@
 <!-- Content Wrapper -->
 <div class="container-fluid mt-4">
+  <!-- Toast Notification -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
+    <div id="deleteToast" class="toast align-items-center text-white bg-success border-0" role="alert"
+      aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">
+          <i class="fas fa-check-circle me-2"></i>
+          <span id="toastMessage">Đã xóa email thành công!</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+          aria-label="Close"></button>
+      </div>
+    </div>
+  </div>
+
   <!-- Page Header -->
   <div class="row mb-4">
     <div class="col-12">
@@ -42,8 +57,8 @@
       <div class="card border-0 shadow-sm">
         <!-- Toolbar -->
         <div class="card-header bg-white border-0 py-3">
-          <div class="d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center">
+          <div class="d-flex justify-content-end align-items-center">
+            <!-- <div class="d-flex align-items-center">
               <input type="checkbox" class="form-check-input me-3" id="selectAll">
               <div class="btn-group" role="group">
                 <button class="btn btn-sm btn-outline-secondary" title="Đánh dấu đã đọc">
@@ -56,7 +71,7 @@
                   <i class="fas fa-trash"></i>
                 </button>
               </div>
-            </div>
+            </div> -->
             <div class="d-flex align-items-center">
               <span class="text-muted small me-3">
                 Trang <%= pagination.currentPage %> / <%= pagination.totalPages %>
@@ -82,7 +97,7 @@
               <thead class="bg-light">
                 <tr>
                   <th class="border-0 ps-4" style="width: 40px;"></th>
-                  <th class="border-0" style="width: 50px;"></th>
+                  <!-- <th class="border-0" style="width: 50px;"></th> -->
                   <th class="border-0">Người gửi</th>
                   <th class="border-0">Tiêu đề</th>
                   <th class="border-0">Danh mục</th>
@@ -97,12 +112,12 @@
                     %>
                     <tr class="email-row <%= email.is_read ? '' : 'table-primary bg-opacity-10' %>"
                       data-email-id="<%= email.id %>">
-                      <td class="ps-4 align-middle">
+                      <!-- <td class="ps-4 align-middle">
                         <input type="checkbox" class="form-check-input email-checkbox" value="<%= email.id %>">
-                      </td>
+                      </td> -->
                       <td class="align-middle">
                         <% if (!email.is_read) { %>
-                          <i class="fas fa-circle text-primary" style="font-size: 8px;"></i>
+                          <!-- <i class="fas fa-circle text-primary" style="font-size: 8px;"></i> -->
                           <% } %>
                       </td>
                       <td class="align-middle">
@@ -283,8 +298,38 @@
     btn.addEventListener('click', function () {
       if (confirm('Bạn có chắc chắn muốn xóa email này?')) {
         const emailId = this.dataset.emailId;
-        // Implement delete functionality
-        console.log('Delete email:', emailId);
+        try {
+          fetch(`/emails/${emailId}`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }).then(res => res.json()).then(result => {
+            if (result.success) {
+              // Remove email row from DOM
+              const emailRow = document.querySelector(`.email-row[data-email-id="${emailId}"]`);
+              if (emailRow) {
+                emailRow.remove();
+              }
+
+              // Show success toast
+              const toastEl = document.getElementById('deleteToast');
+              const toast = new bootstrap.Toast(toastEl, {
+                autohide: true,
+                delay: 3000
+              });
+              toast.show();
+            } else {
+              alert('Lỗi khi xóa email!');
+            }
+          }).catch(error => {
+            console.error('Error deleting email:', error);
+            alert('Đã xảy ra lỗi khi xóa email!');
+          });
+        } catch (error) {
+          console.error('Error deleting email:', error);
+          alert('Đã xảy ra lỗi khi xóa email!');
+        }
       }
     });
   });
