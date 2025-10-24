@@ -26,7 +26,7 @@
           </h2>
           <p class="text-muted mb-0">
             <small>
-              Tổng số: <strong>
+              Tổng số: <strong id="totalEmailsCount">
                 <%= pagination.totalEmails %>
               </strong> email
             </small>
@@ -205,7 +205,7 @@
         <% if (emails && emails.length> 0) { %>
           <div class="card-footer bg-white border-0 py-3">
             <div class="d-flex justify-content-between align-items-center">
-              <span class="text-muted">
+              <span class="text-muted" id="paginationSummary">
                 Hiển thị <%= (pagination.currentPage - 1) * 20 + 1 %> -
                   <%= Math.min(pagination.currentPage * 20, pagination.totalEmails) %>
                     trong tổng số <%= pagination.totalEmails %> email
@@ -300,6 +300,26 @@
               if (emailRow) {
                 emailRow.remove();
               }
+
+              // Update total email count (use ID to select reliably)
+              const totalElement = document.getElementById('totalEmailsCount');
+              // safe parse: remove non-digits, fallback to 0
+              if (totalElement) {
+                const digits = totalElement.textContent.replace(/\D/g, '');
+                let currentTotal = parseInt(digits, 10);
+                if (Number.isNaN(currentTotal)) currentTotal = 0;
+                currentTotal = Math.max(0, currentTotal - 1);
+                totalElement.textContent = currentTotal;
+              }
+
+              // Update the footer summary: replace the last number in the text (the total)
+              const footerSummary = document.getElementById('paginationSummary');
+              if (footerSummary) {
+                // replace the last occurrence of a number with currentTotal
+                const newTotal = totalElement ? totalElement.textContent : ((footerSummary.textContent.match(/\d+/g) || []).pop() || '0');
+                footerSummary.textContent = footerSummary.textContent.replace(/(\d+)(?!.*\d)/, newTotal);
+              }
+
               // Show success toast
               const toastEl = document.getElementById('deleteToast');
               const toast = new bootstrap.Toast(toastEl, {
