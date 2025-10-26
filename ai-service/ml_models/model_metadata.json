@@ -1,0 +1,9 @@
+{
+    "max_words": 50000,
+    "max_len": 256,
+    "embedding_dim": 128,
+    "num_filters": 128,
+    "kernel_size": 5,
+    "learning_rate": 0.0001,
+    "num_classes": 7
+}
