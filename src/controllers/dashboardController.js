@@ -136,7 +136,7 @@ class DashboardController {
         layout: 'layouts/main',
         currentPage: 'dashboard',
         stats: stats,
-        // labels: labelsWithCount,
+        labels: labelsWithCount,
         recentEmails,
         // labelStats: labelStatsMap,
         selectedLabel: null
