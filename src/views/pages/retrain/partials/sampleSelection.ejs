@@ -1,0 +1,92 @@
+<!-- Sample Selection Tab -->
+<div class="row mb-4">
+  <div class="col-12">
+    <h5 class="mb-3">
+      <i class="fas fa-database me-2"></i>
+      Chọn mẫu dữ liệu huấn luyện
+    </h5>
+    <p class="text-muted">
+      Chọn ít nhất 10 email để sử dụng làm dữ liệu huấn luyện. Bạn có thể lọc theo nhãn hoặc tìm kiếm.
+    </p>
+  </div>
+</div>
+
+<!-- Filters and Actions -->
+<div class="row mb-3">
+  <div class="col-md-4">
+    <div class="input-group">
+      <span class="input-group-text">
+        <i class="fas fa-search"></i>
+      </span>
+      <input type="text" class="form-control" id="searchSamples" 
+             placeholder="Tìm kiếm mẫu...">
+    </div>
+  </div>
+  <div class="col-md-3">
+    <select class="form-select" id="labelFilter">
+      <option value="all">Tất cả nhãn</option>
+    </select>
+  </div>
+  <div class="col-md-5 text-end">
+    <button class="btn btn-outline-primary" onclick="selectAllSamples()">
+      <i class="fas fa-check-double me-1"></i>
+      Chọn tất cả
+    </button>
+    <button class="btn btn-outline-secondary" onclick="deselectAllSamples()">
+      <i class="fas fa-times me-1"></i>
+      Bỏ chọn tất cả
+    </button>
+  </div>
+</div>
+
+<!-- Selected Count -->
+<div class="row mb-3">
+  <div class="col-12">
+    <div class="alert alert-info d-flex align-items-center">
+      <i class="fas fa-info-circle me-2"></i>
+      <span>Đã chọn: <strong id="selectedCount">0</strong> mẫu</span>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Indicator -->
+<div id="samplesLoading" class="text-center py-5" style="display: none;">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <p class="mt-2 text-muted">Đang tải dữ liệu...</p>
+</div>
+
+<!-- Samples Table -->
+<div class="row">
+  <div class="col-12">
+    <div class="table-responsive">
+      <table class="table table-hover" id="samplesTable">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 50px;">
+              <input type="checkbox" class="form-check-input" id="selectAllCheckbox">
+            </th>
+            <th style="width: 80px;">ID</th>
+            <th>Nội dung</th>
+            <th style="width: 150px;">Nhãn</th>
+          </tr>
+        </thead>
+        <tbody id="samplesTableBody">
+          <!-- Samples will be loaded here dynamically -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Continue Button -->
+<div class="row mt-4">
+  <div class="col-12 text-end">
+    <button class="btn btn-primary btn-lg" id="continueBtn" onclick="continueToConfig()" disabled>
+      Tiếp tục
+      <i class="fas fa-arrow-right ms-2"></i>
+    </button>
+  </div>
+</div>
+
