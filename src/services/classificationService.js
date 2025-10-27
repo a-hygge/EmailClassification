@@ -77,39 +77,6 @@ class ClassificationService {
       };
     }
   }
-
-  /**
-   * Batch classify multiple emails
-   * @param {Array<number>} emailIds - Array of email IDs
-   * @returns {Promise<Array>} Array of classification results
-   */
-  async classifyBatch(emailIds) {
-    const results = [];
-
-    for (const emailId of emailIds) {
-      const result = await this.classifyAndUpdate(emailId);
-      results.push({ emailId, ...result });
-    }
-
-    return results;
-  }
-
-  /**
-   * Re-classify an email (manual trigger)
-   * @param {number} emailId - Email ID to re-classify
-   * @returns {Promise<Object>} Classification result
-   */
-  async reclassifyEmail(emailId) {
-    return this.classifyAndUpdate(emailId);
-  }
-
-  /**
-   * Check if ML service is available
-   * @returns {Promise<boolean>} True if service is available
-   */
-  async isServiceAvailable() {
-    return await mlApiClient.healthCheck();
-  }
 }
 
 export default new ClassificationService();
