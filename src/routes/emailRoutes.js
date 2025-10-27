@@ -13,6 +13,9 @@ router.get('/important', getImportantEmails);
 // GET /emails/:id - Chi tiết email
 router.get('/:id', show);
 
+// GET /emails/:id/:labelId - Chi tiết email với label
+router.get('/:id/:labelId', show);
+
 // PUT /emails/:id/read - Đánh dấu đã đọc
 router.put('/:id/read', markAsRead);
 

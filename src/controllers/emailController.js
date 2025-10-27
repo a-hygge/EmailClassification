@@ -262,6 +262,11 @@ class EmailController {
         return res.status(404).send('Email not found');
       }
 
+      const selectedLabelId = req.params.labelId ? parseInt(req.params.labelId) : null;
+      const selectedLabel = selectedLabelId
+        ? await Label.findByPk(selectedLabelId)
+        : null;
+
       // Đánh dấu đã đọc
       if (emailRecipient.isRead === 0) {
         await emailRecipient.update({ isRead: 1 });
@@ -274,7 +279,7 @@ class EmailController {
         emailRecipient,
         labels: labelsWithCount,
         stats: stats,
-        selectedLabel: null
+        selectedLabel: selectedLabel
       });
 
     } catch (error) {

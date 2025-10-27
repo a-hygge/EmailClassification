@@ -136,13 +136,9 @@ class DashboardController {
         layout: 'layouts/main',
         currentPage: 'dashboard',
         stats: stats,
-        labels: labelsWithCount,
+        // labels: labelsWithCount,
         recentEmails,
         // labelStats: labelStatsMap,
-        chartData: {
-          days: last7Days,
-          counts: emailsByDay
-        },
         selectedLabel: null
       });
 

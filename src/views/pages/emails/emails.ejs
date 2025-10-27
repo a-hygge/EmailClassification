@@ -31,9 +31,14 @@
           </h2>
           <p class="text-muted mb-0">
             <small>
-              Tổng số: <strong id="totalEmailsCount">
-                <%= pagination.totalEmails %>
-              </strong> email
+              <% if (selectedLabel) { %>
+                Danh mục: <strong>
+                  <%= selectedLabel.name %>
+                </strong> •
+                <% } %>
+                  Tổng số: <strong id="totalEmailsCount">
+                    <%= pagination.totalEmails %>
+                  </strong> email
             </small>
           </p>
         </div>
@@ -134,7 +139,7 @@
                       </td>
                       <td class="align-middle">
                         <div class="text-truncate" style="max-width: 400px;">
-                          <a href="/emails/<%= email.id %>"
+                          <a href="/emails/<%= email.id %><%= selectedLabel ? '/' + selectedLabel.id : '' %>"
                             class="text-decoration-none text-dark <%= !recipient.isRead ? 'fw-bold' : '' %>">
                             <%= email.title || 'No Subject' %>
                           </a>
