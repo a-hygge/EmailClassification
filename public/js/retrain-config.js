@@ -5,57 +5,10 @@
 let currentJobId = null;
 let pollingInterval = null;
 
-// Back to samples tab
+// Back to samples page
 function backToSamples() {
-  // Disable config and results tabs when going back
-  disableTab('config-tab');
-  disableTab('results-tab');
-
-  // Remove completed marks
-  unmarkTabCompleted('samples-tab');
-  unmarkTabCompleted('config-tab');
-
-  const samplesTab = document.getElementById('samples-tab');
-  if (samplesTab) {
-    const tab = new bootstrap.Tab(samplesTab);
-    tab.show();
-  }
-}
-
-// Mark tab as completed
-function markTabCompleted(tabId) {
-  const tab = document.getElementById(tabId);
-  if (tab) {
-    tab.classList.add('completed');
-  }
-}
-
-// Remove completed mark from tab
-function unmarkTabCompleted(tabId) {
-  const tab = document.getElementById(tabId);
-  if (tab) {
-    tab.classList.remove('completed');
-  }
-}
-
-// Enable a specific tab
-function enableTab(tabId) {
-  const tab = document.getElementById(tabId);
-  if (tab) {
-    tab.classList.remove('disabled');
-    tab.removeAttribute('disabled');
-    tab.setAttribute('data-bs-toggle', 'tab');
-  }
-}
-
-// Disable a specific tab
-function disableTab(tabId) {
-  const tab = document.getElementById(tabId);
-  if (tab) {
-    tab.classList.add('disabled');
-    tab.setAttribute('disabled', 'disabled');
-    tab.removeAttribute('data-bs-toggle');
-  }
+  // Navigate back to samples page
+  window.location.href = '/retrain';
 }
 
 // Validate configuration
@@ -142,21 +95,8 @@ async function startRetraining() {
     if (result.success) {
       currentJobId = result.jobId;
 
-      // Mark step 2 as completed
-      markTabCompleted('config-tab');
-
-      // Enable results tab
-      enableTab('results-tab');
-
-      // Switch to results tab
-      const resultsTab = document.getElementById('results-tab');
-      if (resultsTab) {
-        const tab = new bootstrap.Tab(resultsTab);
-        tab.show();
-      }
-
-      // Start polling for status
-      startPollingStatus(currentJobId);
+      // Navigate to results page with jobId
+      window.location.href = `/retrain/results?jobId=${currentJobId}`;
     } else {
       alert('Lỗi khi bắt đầu huấn luyện: ' + result.error);
       
@@ -179,83 +119,59 @@ async function startRetraining() {
   }
 }
 
-// Start polling for training status
-function startPollingStatus(jobId) {
-  // Clear any existing interval
-  if (pollingInterval) {
-    clearInterval(pollingInterval);
-  }
-  
-  // Poll every 2 seconds
-  pollingInterval = setInterval(async () => {
-    await checkTrainingStatus(jobId);
-  }, 2000);
-  
-  // Also check immediately
-  checkTrainingStatus(jobId);
-}
 
-// Check training status
-async function checkTrainingStatus(jobId) {
-  try {
-    const response = await fetch(`/retrain/status/${jobId}`);
-    const status = await response.json();
-    
-    if (status.success) {
-      // Update progress bar
-      updateProgressBar(status.progress, status.currentEpoch, status.totalEpochs);
-      
-      // Check if completed
-      if (status.status === 'completed') {
-        clearInterval(pollingInterval);
-        pollingInterval = null;
-        
-        // Load results
-        await loadTrainingResults(jobId);
-      } else if (status.status === 'failed') {
-        clearInterval(pollingInterval);
-        pollingInterval = null;
-        
-        alert('Huấn luyện thất bại. Vui lòng thử lại.');
-        backToSamples();
-      }
-    }
-  } catch (error) {
-    console.error('Error checking training status:', error);
-  }
-}
 
-// Update progress bar
-function updateProgressBar(progress, currentEpoch, totalEpochs) {
-  const progressBar = document.getElementById('trainingProgress');
-  const progressText = document.getElementById('progressText');
-  const epochText = document.getElementById('epochText');
-  
-  if (progressBar) {
-    progressBar.style.width = progress + '%';
-  }
-  
-  if (progressText) {
-    progressText.textContent = Math.round(progress) + '%';
-  }
-  
-  if (epochText) {
-    epochText.textContent = `Epoch ${currentEpoch}/${totalEpochs}`;
-  }
-}
-
-// Initialize when config tab is shown
+// Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
-  const configTab = document.getElementById('config-tab');
-  if (configTab) {
-    configTab.addEventListener('shown.bs.tab', () => {
-      // Update selected samples count
-      const selectedSamples = JSON.parse(sessionStorage.getItem('selectedSamples') || '[]');
-      const countElement = document.getElementById('selectedSamplesCount');
-      if (countElement) {
-        countElement.textContent = selectedSamples.length;
-      }
-    });
+  // Check if we're on the config page
+  if (window.location.pathname.includes('/retrain/config')) {
+    // Update selected samples count
+    const selectedSamples = JSON.parse(sessionStorage.getItem('selectedSamples') || '[]');
+    const countElement = document.getElementById('selectedSamplesCount');
+    if (countElement) {
+      countElement.textContent = selectedSamples.length;
+    }
+
+    // Load models from samples data (if available in sessionStorage)
+    // Or fetch them again
+    loadModelsForConfig();
   }
 });
+
+// Load models for configuration
+async function loadModelsForConfig() {
+  try {
+    const response = await fetch('/retrain/samples');
+    const data = await response.json();
+
+    if (data.success && data.models) {
+      populateModelSelect(data.models);
+    }
+  } catch (error) {
+    console.error('Error loading models:', error);
+  }
+}
+
+// Populate model select dropdown
+function populateModelSelect(models) {
+  const modelSelect = document.getElementById('modelType');
+  if (!modelSelect) return;
+
+  // Clear existing options
+  modelSelect.innerHTML = '<option value="">Chọn mô hình...</option>';
+
+  // Add models from database
+  models.forEach(model => {
+    const option = document.createElement('option');
+    option.value = model.id;
+    option.textContent = model.name;
+
+    // Add metrics info if available
+    if (model.accuracy) {
+      option.textContent += ` (Accuracy: ${(model.accuracy * 100).toFixed(2)}%)`;
+    }
+
+    modelSelect.appendChild(option);
+  });
+}
 

@@ -1,36 +1,29 @@
-import { Router } from 'express';
+import { Router } from "express";
 const router = Router();
 
 import {
   showRetrainPage,
+  showConfigPage,
+  showResultsPage,
   getSamples,
   startRetraining,
   getTrainingStatus,
   getTrainingResults,
   saveModel,
-  getTrainingHistory
-} from '../controllers/retrainController.js';
+  getTrainingHistory,
+} from "../controllers/retrainController.js";
 
-// Main retrain page
-router.get('/', showRetrainPage);
+// Page routes
+router.get("/", showRetrainPage);
+router.get("/config", showConfigPage);
+router.get("/results", showResultsPage);
 
-// Get samples for selection
-router.get('/samples', getSamples);
-
-// Start training
-router.post('/start', startRetraining);
-
-// Get training status
-router.get('/status/:jobId', getTrainingStatus);
-
-// Get training results
-router.get('/results/:jobId', getTrainingResults);
-
-// Save trained model
-router.post('/save/:jobId', saveModel);
-
-// Get training history
-router.get('/history', getTrainingHistory);
+// API routes
+router.get("/samples", getSamples);
+router.post("/start", startRetraining);
+router.get("/status/:jobId", getTrainingStatus);
+router.get("/results/:jobId", getTrainingResults);
+router.post("/save/:jobId", saveModel);
+router.get("/history", getTrainingHistory);
 
 export default router;
-

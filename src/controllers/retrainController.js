@@ -10,22 +10,69 @@ import db from '../models/index.js';
 
 class RetrainController {
   /**
-   * GET /retrain - Show retrain page
+   * GET /retrain - Show sample selection page (Step 1)
    */
   async showRetrainPage(req, res) {
     try {
       const stats = req.session.stats || {};
       const labelsWithCount = req.session.labelsWithCount || [];
 
-      res.render('pages/retrain/index', {
-        title: 'Retrain Model - Email Classification System',
+      res.render('pages/retrain/samples', {
+        title: 'Select Training Samples - Email Classification System',
         layout: 'layouts/main',
         currentPage: 'retrain',
         stats,
-        labels: labelsWithCount
+        labels: labelsWithCount,
+        selectedLabel: null
       });
     } catch (error) {
       console.error('Error showing retrain page:', error);
+      res.status(500).send('Server Error');
+    }
+  }
+
+  /**
+   * GET /retrain/config - Show configuration page (Step 2)
+   */
+  async showConfigPage(req, res) {
+    try {
+      const stats = req.session.stats || {};
+      const labelsWithCount = req.session.labelsWithCount || [];
+
+      res.render('pages/retrain/config', {
+        title: 'Configure Training - Email Classification System',
+        layout: 'layouts/main',
+        currentPage: 'retrain',
+        stats,
+        labels: labelsWithCount,
+        selectedLabel: null
+      });
+    } catch (error) {
+      console.error('Error showing config page:', error);
+      res.status(500).send('Server Error');
+    }
+  }
+
+  /**
+   * GET /retrain/results - Show results page (Step 3)
+   */
+  async showResultsPage(req, res) {
+    try {
+      const stats = req.session.stats || {};
+      const labelsWithCount = req.session.labelsWithCount || [];
+      const jobId = req.query.jobId || null;
+
+      res.render('pages/retrain/results', {
+        title: 'Training Results - Email Classification System',
+        layout: 'layouts/main',
+        currentPage: 'retrain',
+        stats,
+        labels: labelsWithCount,
+        jobId,
+        selectedLabel: null
+      });
+    } catch (error) {
+      console.error('Error showing results page:', error);
       res.status(500).send('Server Error');
     }
   }
@@ -161,6 +208,8 @@ const retrainController = new RetrainController();
 
 export const {
   showRetrainPage,
+  showConfigPage,
+  showResultsPage,
   getSamples,
   startRetraining,
   getTrainingStatus,

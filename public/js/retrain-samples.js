@@ -224,7 +224,7 @@ function searchSamples(query) {
   renderSamples(filtered);
 }
 
-// Continue to configuration tab
+// Continue to configuration page
 function continueToConfig() {
   if (selectedSampleIds.size < 10) {
     alert('Vui lòng chọn ít nhất 10 mẫu để tiếp tục');
@@ -234,61 +234,11 @@ function continueToConfig() {
   // Store selected IDs in sessionStorage
   sessionStorage.setItem('selectedSamples', JSON.stringify([...selectedSampleIds]));
 
-  // Update selected count in config tab
-  const selectedCountElement = document.getElementById('selectedSamplesCount');
-  if (selectedCountElement) {
-    selectedCountElement.textContent = selectedSampleIds.size;
-  }
-
-  // Mark step 1 as completed
-  markTabCompleted('samples-tab');
-
-  // Enable config tab
-  enableTab('config-tab');
-
-  // Switch to configuration tab
-  const configTab = document.getElementById('config-tab');
-  if (configTab) {
-    const tab = new bootstrap.Tab(configTab);
-    tab.show();
-  }
+  // Navigate to configuration page
+  window.location.href = '/retrain/config';
 }
 
-// Enable a specific tab
-function enableTab(tabId) {
-  const tab = document.getElementById(tabId);
-  if (tab) {
-    tab.classList.remove('disabled');
-    tab.removeAttribute('disabled');
-    tab.setAttribute('data-bs-toggle', 'tab');
-  }
-}
 
-// Disable a specific tab
-function disableTab(tabId) {
-  const tab = document.getElementById(tabId);
-  if (tab) {
-    tab.classList.add('disabled');
-    tab.setAttribute('disabled', 'disabled');
-    tab.removeAttribute('data-bs-toggle');
-  }
-}
-
-// Mark tab as completed
-function markTabCompleted(tabId) {
-  const tab = document.getElementById(tabId);
-  if (tab) {
-    tab.classList.add('completed');
-  }
-}
-
-// Remove completed mark from tab
-function unmarkTabCompleted(tabId) {
-  const tab = document.getElementById(tabId);
-  if (tab) {
-    tab.classList.remove('completed');
-  }
-}
 
 // Escape HTML to prevent XSS
 function escapeHtml(text) {
@@ -327,45 +277,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     }
-
-    // Prevent clicking on disabled tabs
-    preventDisabledTabClicks();
   }
 });
-
-// Prevent clicking on disabled tabs
-function preventDisabledTabClicks() {
-  const tabs = document.querySelectorAll('#retrainTabs .nav-link');
-  tabs.forEach(tab => {
-    tab.addEventListener('click', (e) => {
-      if (tab.classList.contains('disabled')) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        // Show tooltip or message
-        const tabName = tab.textContent.trim();
-        showTabLockedMessage(tabName);
-      }
-    });
-  });
-}
-
-// Show message when user tries to click locked tab
-function showTabLockedMessage(tabName) {
-  // Create a temporary tooltip
-  const message = document.createElement('div');
-  message.className = 'alert alert-warning position-fixed top-50 start-50 translate-middle';
-  message.style.zIndex = '9999';
-  message.innerHTML = `
-    <i class="fas fa-lock me-2"></i>
-    Vui lòng hoàn thành các bước trước để mở khóa: <strong>${tabName}</strong>
-  `;
-
-  document.body.appendChild(message);
-
-  // Remove after 2 seconds
-  setTimeout(() => {
-    message.remove();
-  }, 2000);
-}
 

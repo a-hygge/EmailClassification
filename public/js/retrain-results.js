@@ -226,106 +226,103 @@ async function saveTrainedModel() {
   }
 }
 
-// Train again - reset to samples tab
+// Train again - navigate back to samples page
 function trainAgain() {
   // Clear session storage
   sessionStorage.removeItem('selectedSamples');
 
-  // Reset current job ID
-  currentJobId = null;
+  // Navigate back to samples page
+  window.location.href = '/retrain';
+}
 
-  // Clear charts
-  if (lossChart) {
-    lossChart.destroy();
-    lossChart = null;
-  }
-  if (accuracyChart) {
-    accuracyChart.destroy();
-    accuracyChart = null;
-  }
+let pollingInterval = null;
 
-  // Reset results display
-  const loading = document.getElementById('trainingLoading');
-  const content = document.getElementById('resultsContent');
-
-  if (loading) loading.style.display = 'block';
-  if (content) content.style.display = 'none';
-
-  // Reset progress bar
-  if (typeof updateProgressBar === 'function') {
-    updateProgressBar(0, 0, 10);
+// Start polling for training status
+function startPollingStatus(jobId) {
+  // Clear any existing interval
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
   }
 
-  // Disable config and results tabs
-  disableTab('config-tab');
-  disableTab('results-tab');
+  // Poll every 2 seconds
+  pollingInterval = setInterval(async () => {
+    await checkTrainingStatus(jobId);
+  }, 2000);
 
-  // Remove all completed marks
-  unmarkTabCompleted('samples-tab');
-  unmarkTabCompleted('config-tab');
-  unmarkTabCompleted('results-tab');
+  // Also check immediately
+  checkTrainingStatus(jobId);
+}
 
-  // Go back to samples tab
-  const samplesTab = document.getElementById('samples-tab');
-  if (samplesTab) {
-    const tab = new bootstrap.Tab(samplesTab);
-    tab.show();
-  }
+// Check training status
+async function checkTrainingStatus(jobId) {
+  try {
+    const response = await fetch(`/retrain/status/${jobId}`);
+    const status = await response.json();
 
-  // Reload samples
-  if (typeof loadSamples === 'function') {
-    loadSamples();
+    if (status.success) {
+      // Update progress bar
+      updateProgressBar(status.progress, status.currentEpoch, status.totalEpochs);
+
+      // Check if completed
+      if (status.status === 'completed') {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+
+        // Load results
+        await loadTrainingResults(jobId);
+      } else if (status.status === 'failed') {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+
+        alert('Huấn luyện thất bại. Vui lòng thử lại.');
+        window.location.href = '/retrain';
+      }
+    }
+  } catch (error) {
+    console.error('Error checking training status:', error);
   }
 }
 
-// Mark tab as completed
-function markTabCompleted(tabId) {
-  const tab = document.getElementById(tabId);
-  if (tab) {
-    tab.classList.add('completed');
+// Update progress bar
+function updateProgressBar(progress, currentEpoch, totalEpochs) {
+  const progressBar = document.getElementById('trainingProgress');
+  const progressText = document.getElementById('progressText');
+  const epochText = document.getElementById('epochText');
+
+  if (progressBar) {
+    progressBar.style.width = progress + '%';
+  }
+
+  if (progressText) {
+    progressText.textContent = Math.round(progress) + '%';
+  }
+
+  if (epochText) {
+    epochText.textContent = `Epoch ${currentEpoch}/${totalEpochs}`;
   }
 }
 
-// Remove completed mark from tab
-function unmarkTabCompleted(tabId) {
-  const tab = document.getElementById(tabId);
-  if (tab) {
-    tab.classList.remove('completed');
-  }
-}
-
-// Enable a specific tab
-function enableTab(tabId) {
-  const tab = document.getElementById(tabId);
-  if (tab) {
-    tab.classList.remove('disabled');
-    tab.removeAttribute('disabled');
-    tab.setAttribute('data-bs-toggle', 'tab');
-  }
-}
-
-// Disable a specific tab
-function disableTab(tabId) {
-  const tab = document.getElementById(tabId);
-  if (tab) {
-    tab.classList.add('disabled');
-    tab.setAttribute('disabled', 'disabled');
-    tab.removeAttribute('data-bs-toggle');
-  }
-}
-
-// Initialize when results tab is shown
+// Initialize when page loads
 document.addEventListener('DOMContentLoaded', () => {
-  const resultsTab = document.getElementById('results-tab');
-  if (resultsTab) {
-    resultsTab.addEventListener('shown.bs.tab', () => {
+  // Check if we're on the results page
+  if (window.location.pathname.includes('/retrain/results')) {
+    // Get jobId from window.currentJobId (set in the EJS template)
+    if (window.currentJobId) {
+      currentJobId = window.currentJobId;
+
       // Show loading by default
       const loading = document.getElementById('trainingLoading');
       const content = document.getElementById('resultsContent');
-      
+
       if (loading) loading.style.display = 'block';
       if (content) content.style.display = 'none';
-    });
+
+      // Start polling for status
+      startPollingStatus(currentJobId);
+    } else {
+      alert('Không tìm thấy job ID. Vui lòng bắt đầu lại.');
+      window.location.href = '/retrain';
+    }
   }
 });
 
