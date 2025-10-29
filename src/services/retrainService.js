@@ -154,13 +154,16 @@ class RetrainService {
         await trainingJobDao.update(jobId, { status: status.status });
       }
 
+      // Extract progress info from status.progress object if it exists
+      const progressInfo = status.progress || {};
+
       return {
         success: true,
         jobId: job.id,
         status: status.status,
-        progress: status.progress,
-        currentEpoch: status.currentEpoch,
-        totalEpochs: status.totalEpochs
+        progress: progressInfo.progress || 0,
+        currentEpoch: progressInfo.currentEpoch || 0,
+        totalEpochs: progressInfo.totalEpochs || 0
       };
     } catch (error) {
       console.error('Error getting training status:', error);
@@ -188,16 +191,44 @@ class RetrainService {
       // Update job with results
       await trainingJobDao.update(jobId, { results: results });
 
+      // Transform metrics to match frontend expectations
+      const transformedMetrics = {
+        accuracy: results.metrics?.testAccuracy || 0,
+        precision: this.calculateWeightedAverage(results.metrics?.classificationReport, 'precision'),
+        recall: this.calculateWeightedAverage(results.metrics?.classificationReport, 'recall'),
+        f1: this.calculateWeightedAverage(results.metrics?.classificationReport, 'f1-score')
+      };
+
+      // Transform history to match frontend expectations
+      const transformedHistory = {
+        train_loss: results.history?.loss || [],
+        val_loss: results.history?.val_loss || [],
+        train_acc: results.history?.accuracy || [],
+        val_acc: results.history?.val_accuracy || []
+      };
+
       return {
         success: true,
         jobId: job.id,
-        metrics: results.metrics,
-        history: results.history
+        metrics: transformedMetrics,
+        history: transformedHistory,
+        rawMetrics: results.metrics, // Keep raw metrics for reference
+        rawHistory: results.history
       };
     } catch (error) {
       console.error('Error getting training results:', error);
       throw error;
     }
+  }
+
+  /**
+   * Calculate weighted average from classification report
+   */
+  calculateWeightedAverage(classificationReport, metric) {
+    if (!classificationReport || !classificationReport['weighted avg']) {
+      return 0;
+    }
+    return classificationReport['weighted avg'][metric] || 0;
   }
 
   /**

@@ -6,6 +6,7 @@ import {
   showConfigPage,
   showResultsPage,
   getSamples,
+  getModels,
   startRetraining,
   getTrainingStatus,
   getTrainingResults,
@@ -20,6 +21,7 @@ router.get("/results", showResultsPage);
 
 // API routes
 router.get("/samples", getSamples);
+router.get("/models", getModels);
 router.post("/start", startRetraining);
 router.get("/status/:jobId", getTrainingStatus);
 router.get("/results/:jobId", getTrainingResults);

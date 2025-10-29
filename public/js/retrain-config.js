@@ -87,6 +87,7 @@ async function startRetraining() {
       headers: {
         'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify(config)
     });
     
@@ -141,7 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
 // Load models for configuration
 async function loadModelsForConfig() {
   try {
-    const response = await fetch('/retrain/samples');
+    const response = await fetch('/retrain/models', {
+      credentials: 'include'
+    });
     const data = await response.json();
 
     if (data.success && data.models) {

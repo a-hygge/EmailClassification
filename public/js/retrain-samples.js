@@ -5,22 +5,21 @@
 let allSamples = [];
 let selectedSampleIds = new Set();
 let allLabels = [];
-let allModels = [];
 
 // Load samples on page load
 async function loadSamples() {
   try {
     showSamplesLoading();
-    const response = await fetch('/retrain/samples');
+    const response = await fetch('/retrain/samples', {
+      credentials: 'include'
+    });
     const data = await response.json();
     
     if (data.success) {
       allSamples = data.samples;
       allLabels = data.labels;
-      allModels = data.models;
       renderSamples(allSamples);
       populateLabelFilter(data.labels);
-      populateModelSelect(data.models);
     } else {
       showError('Failed to load samples');
     }
@@ -180,39 +179,7 @@ function filterByLabel(labelId) {
   }
 }
 
-// Populate model select dropdown
-function populateModelSelect(models) {
-  const modelSelect = document.getElementById('modelType');
-  if (!modelSelect) return;
 
-  // Clear existing options
-  modelSelect.innerHTML = '';
-
-  if (models.length === 0) {
-    // If no models in database, show message
-    const option = document.createElement('option');
-    option.value = '';
-    option.textContent = 'Không có mô hình khả dụng';
-    option.disabled = true;
-    option.selected = true;
-    modelSelect.appendChild(option);
-    return;
-  }
-
-  // Add models from database
-  models.forEach(model => {
-    const option = document.createElement('option');
-    option.value = model.id;  // Use model ID as value
-    option.textContent = model.name;
-
-    // Add metrics info if available
-    if (model.accuracy) {
-      option.textContent += ` (Accuracy: ${(model.accuracy * 100).toFixed(2)}%)`;
-    }
-
-    modelSelect.appendChild(option);
-  });
-}
 
 // Search samples
 function searchSamples(query) {

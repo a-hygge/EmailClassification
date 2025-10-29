@@ -2,11 +2,11 @@
  * Retrain Controller
  * Handles HTTP requests for model retraining
  */
-import retrainService from '../services/retrainService.js';
-import emailDao from '../dao/emailDao.js';
-import labelDao from '../dao/labelDao.js';
-import modelDao from '../dao/modelDao.js';
-import db from '../models/index.js';
+import retrainService from "../services/retrainService.js";
+import emailDao from "../dao/emailDao.js";
+import labelDao from "../dao/labelDao.js";
+import modelDao from "../dao/modelDao.js";
+import db from "../models/index.js";
 
 class RetrainController {
   /**
@@ -17,17 +17,17 @@ class RetrainController {
       const stats = req.session.stats || {};
       const labelsWithCount = req.session.labelsWithCount || [];
 
-      res.render('pages/retrain/samples', {
-        title: 'Select Training Samples - Email Classification System',
-        layout: 'layouts/main',
-        currentPage: 'retrain',
+      res.render("pages/retrain/samples", {
+        title: "Select Training Samples - Email Classification System",
+        layout: "layouts/main",
+        currentPage: "retrain",
         stats,
         labels: labelsWithCount,
-        selectedLabel: null
+        selectedLabel: null,
       });
     } catch (error) {
-      console.error('Error showing retrain page:', error);
-      res.status(500).send('Server Error');
+      console.error("Error showing retrain page:", error);
+      res.status(500).send("Server Error");
     }
   }
 
@@ -39,17 +39,17 @@ class RetrainController {
       const stats = req.session.stats || {};
       const labelsWithCount = req.session.labelsWithCount || [];
 
-      res.render('pages/retrain/config', {
-        title: 'Configure Training - Email Classification System',
-        layout: 'layouts/main',
-        currentPage: 'retrain',
+      res.render("pages/retrain/config", {
+        title: "Configure Training - Email Classification System",
+        layout: "layouts/main",
+        currentPage: "retrain",
         stats,
         labels: labelsWithCount,
-        selectedLabel: null
+        selectedLabel: null,
       });
     } catch (error) {
-      console.error('Error showing config page:', error);
-      res.status(500).send('Server Error');
+      console.error("Error showing config page:", error);
+      res.status(500).send("Server Error");
     }
   }
 
@@ -62,18 +62,18 @@ class RetrainController {
       const labelsWithCount = req.session.labelsWithCount || [];
       const jobId = req.query.jobId || null;
 
-      res.render('pages/retrain/results', {
-        title: 'Training Results - Email Classification System',
-        layout: 'layouts/main',
-        currentPage: 'retrain',
+      res.render("pages/retrain/results", {
+        title: "Training Results - Email Classification System",
+        layout: "layouts/main",
+        currentPage: "retrain",
         stats,
         labels: labelsWithCount,
         jobId,
-        selectedLabel: null
+        selectedLabel: null,
       });
     } catch (error) {
-      console.error('Error showing results page:', error);
-      res.status(500).send('Server Error');
+      console.error("Error showing results page:", error);
+      res.status(500).send("Server Error");
     }
   }
 
@@ -83,40 +83,53 @@ class RetrainController {
   async getSamples(req, res) {
     try {
       const samples = await emailDao.findAll({
-        include: [{ model: db.Label, as: 'Label' }],
-        order: [['createdAt', 'DESC']],
-        limit: 1000 // Limit for performance
+        include: [{ model: db.Label, as: "Label" }],
+        order: [["createdAt", "DESC"]],
+        limit: 10000, // Limit for performance
       });
 
       const labels = await labelDao.findAll();
 
-      // Fetch active models from database
-      const models = await modelDao.findAllActive();
-
-      const formattedSamples = samples.map(email => ({
+      const formattedSamples = samples.map((email) => ({
         id: email.id,
         title: email.title,
-        content: email.content.substring(0, 100) + '...', // Preview
+        content: email.content.substring(0, 100) + "...", // Preview
         labelId: email.labelId,
-        labelName: email.Label?.name || 'Unknown'
+        labelName: email.Label?.name || "Unknown",
       }));
 
       res.json({
         success: true,
         samples: formattedSamples,
-        labels: labels.map(l => ({ id: l.id, name: l.name })),
-        models: models.map(m => ({
+        labels: labels.map((l) => ({ id: l.id, name: l.name })),
+      });
+    } catch (error) {
+      console.error("Error getting samples:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  /**
+   * GET /retrain/models - Get available models for selection
+   */
+  async getModels(req, res) {
+    try {
+      const models = await modelDao.findAllActive();
+
+      res.json({
+        success: true,
+        models: models.map((m) => ({
           id: m.id,
           name: m.version,
           path: m.path,
           accuracy: m.accuracy,
           precision: m.precision,
           recall: m.recall,
-          f1Score: m.f1Score
-        }))
+          f1Score: m.f1Score,
+        })),
       });
     } catch (error) {
-      console.error('Error getting samples:', error);
+      console.error("Error getting models:", error);
       res.status(500).json({ success: false, error: error.message });
     }
   }
@@ -126,13 +139,21 @@ class RetrainController {
    */
   async startRetraining(req, res) {
     try {
+      // Check if user is logged in
+      if (!req.session || !req.session.user || !req.session.user.id) {
+        return res.status(401).json({
+          success: false,
+          error: "Unauthorized. Please login again.",
+        });
+      }
+
       const userId = req.session.user.id;
       const config = req.body;
 
       const result = await retrainService.startTraining(userId, config);
       res.json(result);
     } catch (error) {
-      console.error('Error starting training:', error);
+      console.error("Error starting training:", error);
       res.status(500).json({ success: false, error: error.message });
     }
   }
@@ -146,7 +167,7 @@ class RetrainController {
       const result = await retrainService.getTrainingStatus(parseInt(jobId));
       res.json(result);
     } catch (error) {
-      console.error('Error getting training status:', error);
+      console.error("Error getting training status:", error);
       res.status(500).json({ success: false, error: error.message });
     }
   }
@@ -160,7 +181,7 @@ class RetrainController {
       const result = await retrainService.getTrainingResults(parseInt(jobId));
       res.json(result);
     } catch (error) {
-      console.error('Error getting training results:', error);
+      console.error("Error getting training results:", error);
       res.status(500).json({ success: false, error: error.message });
     }
   }
@@ -172,15 +193,15 @@ class RetrainController {
     try {
       const { jobId } = req.params;
       const { modelName } = req.body;
-      
+
       const result = await retrainService.saveModel(
-        parseInt(jobId), 
+        parseInt(jobId),
         modelName || `model_${Date.now()}`
       );
-      
+
       res.json(result);
     } catch (error) {
-      console.error('Error saving model:', error);
+      console.error("Error saving model:", error);
       res.status(500).json({ success: false, error: error.message });
     }
   }
@@ -190,15 +211,23 @@ class RetrainController {
    */
   async getTrainingHistory(req, res) {
     try {
+      // Check if user is logged in
+      if (!req.session || !req.session.user || !req.session.user.id) {
+        return res.status(401).json({
+          success: false,
+          error: "Unauthorized. Please login again.",
+        });
+      }
+
       const userId = req.session.user.id;
       const jobs = await retrainService.getUserTrainingHistory(userId);
-      
+
       res.json({
         success: true,
-        jobs: jobs
+        jobs: jobs,
       });
     } catch (error) {
-      console.error('Error getting training history:', error);
+      console.error("Error getting training history:", error);
       res.status(500).json({ success: false, error: error.message });
     }
   }
@@ -211,12 +240,12 @@ export const {
   showConfigPage,
   showResultsPage,
   getSamples,
+  getModels,
   startRetraining,
   getTrainingStatus,
   getTrainingResults,
   saveModel,
-  getTrainingHistory
+  getTrainingHistory,
 } = retrainController;
 
 export default retrainController;
-

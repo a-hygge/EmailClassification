@@ -8,60 +8,86 @@ let accuracyChart = null;
 // Load training results
 async function loadTrainingResults(jobId) {
   try {
-    const response = await fetch(`/retrain/results/${jobId}`);
+    console.log('📊 Loading training results for job:', jobId);
+
+    const response = await fetch(`/retrain/results/${jobId}`, {
+      credentials: 'include'
+    });
     const result = await response.json();
-    
+
+    console.log('📊 Results received:', result);
+
     if (result.success) {
       // Hide loading, show results
       const loading = document.getElementById('trainingLoading');
       const content = document.getElementById('resultsContent');
-      
+
       if (loading) loading.style.display = 'none';
       if (content) content.style.display = 'block';
-      
+
+      console.log('📊 Metrics:', result.metrics);
+      console.log('📊 History:', result.history);
+
       // Display metrics
       displayMetrics(result.metrics);
-      
+
       // Render charts
       renderCharts(result.history);
     } else {
+      console.error('❌ Failed to load results:', result.error);
       alert('Lỗi khi tải kết quả: ' + result.error);
     }
   } catch (error) {
-    console.error('Error loading results:', error);
+    console.error('❌ Error loading results:', error);
     alert('Lỗi khi tải kết quả: ' + error.message);
   }
 }
 
 // Display metrics
 function displayMetrics(metrics) {
+  if (!metrics) {
+    console.error('Metrics is undefined');
+    return;
+  }
+
   const accuracyEl = document.getElementById('metricAccuracy');
   const precisionEl = document.getElementById('metricPrecision');
   const recallEl = document.getElementById('metricRecall');
   const f1El = document.getElementById('metricF1');
-  
-  if (accuracyEl) accuracyEl.textContent = (metrics.accuracy * 100).toFixed(2) + '%';
-  if (precisionEl) precisionEl.textContent = (metrics.precision * 100).toFixed(2) + '%';
-  if (recallEl) recallEl.textContent = (metrics.recall * 100).toFixed(2) + '%';
-  if (f1El) f1El.textContent = (metrics.f1 * 100).toFixed(2) + '%';
+
+  if (accuracyEl) accuracyEl.textContent = ((metrics.accuracy || 0) * 100).toFixed(2) + '%';
+  if (precisionEl) precisionEl.textContent = ((metrics.precision || 0) * 100).toFixed(2) + '%';
+  if (recallEl) recallEl.textContent = ((metrics.recall || 0) * 100).toFixed(2) + '%';
+  if (f1El) f1El.textContent = ((metrics.f1 || 0) * 100).toFixed(2) + '%';
 }
 
 // Render charts
 function renderCharts(history) {
-  renderLossChart(history.train_loss, history.val_loss);
-  renderAccuracyChart(history.train_acc, history.val_acc);
+  if (!history) {
+    console.error('History is undefined');
+    return;
+  }
+
+  renderLossChart(history.train_loss || [], history.val_loss || []);
+  renderAccuracyChart(history.train_acc || [], history.val_acc || []);
 }
 
 // Render loss chart
 function renderLossChart(trainLoss, valLoss) {
   const ctx = document.getElementById('lossChart');
   if (!ctx) return;
-  
+
+  // Check if data is valid
+  if (!trainLoss || !Array.isArray(trainLoss) || trainLoss.length === 0) {
+    console.error('Invalid trainLoss data');
+    return;
+  }
+
   // Destroy existing chart if any
   if (lossChart) {
     lossChart.destroy();
   }
-  
+
   const epochs = trainLoss.map((_, i) => `Epoch ${i + 1}`);
   
   lossChart = new Chart(ctx, {
@@ -113,12 +139,18 @@ function renderLossChart(trainLoss, valLoss) {
 function renderAccuracyChart(trainAcc, valAcc) {
   const ctx = document.getElementById('accuracyChart');
   if (!ctx) return;
-  
+
+  // Check if data is valid
+  if (!trainAcc || !Array.isArray(trainAcc) || trainAcc.length === 0) {
+    console.error('Invalid trainAcc data');
+    return;
+  }
+
   // Destroy existing chart if any
   if (accuracyChart) {
     accuracyChart.destroy();
   }
-  
+
   const epochs = trainAcc.map((_, i) => `Epoch ${i + 1}`);
   
   accuracyChart = new Chart(ctx, {
@@ -193,6 +225,7 @@ async function saveTrainedModel() {
       headers: {
         'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify({ modelName })
     });
     
@@ -256,7 +289,9 @@ function startPollingStatus(jobId) {
 // Check training status
 async function checkTrainingStatus(jobId) {
   try {
-    const response = await fetch(`/retrain/status/${jobId}`);
+    const response = await fetch(`/retrain/status/${jobId}`, {
+      credentials: 'include'
+    });
     const status = await response.json();
 
     if (status.success) {
