@@ -8,6 +8,7 @@ import DatasetModel from "./dataset.model.js";
 import ModelModel from "./model.model.js";
 import LabelModel from "./label.model.js";
 import BlackListTokenModel from "./blackListToken.model.js";
+import TrainingJobModel from "./trainingJob.model.js";
 
 const User = UserModel(sequelize);
 const Email = EmailModel(sequelize);
@@ -16,6 +17,7 @@ const Dataset = DatasetModel(sequelize);
 const Model = ModelModel(sequelize);
 const Label = LabelModel(sequelize);
 const BlackListToken = BlackListTokenModel(sequelize);
+const TrainingJob = TrainingJobModel(sequelize);
 
 // ------------------ Thiết lập mối quan hệ ------------------
 
@@ -47,15 +49,20 @@ EmailRecipient.belongsTo(Email, { foreignKey: "emailId", as: "email" });
 User.hasMany(BlackListToken, { foreignKey: "userId", as: "blackListTokens" });
 BlackListToken.belongsTo(User, { foreignKey: "userId", as: "user" });
 
+// TrainingJob - User
+User.hasMany(TrainingJob, { foreignKey: "userId", as: "trainingJobs" });
+TrainingJob.belongsTo(User, { foreignKey: "userId", as: "user" });
+
 // ------------------------------------------------------------
 
 export default {
-    sequelize,
-    User,
-    Email,
-    EmailRecipient,
-    Dataset,
-    Model,
-    Label,
-    BlackListToken,
+  sequelize,
+  User,
+  Email,
+  EmailRecipient,
+  Dataset,
+  Model,
+  Label,
+  BlackListToken,
+  TrainingJob,
 };

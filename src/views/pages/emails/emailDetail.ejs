@@ -3,10 +3,10 @@
   <!-- Back Button -->
   <div class="row mb-3">
     <div class="col-12">
-      <a href="/emails" class="btn btn-outline-primary">
+      <button onclick="history.back()" class="btn btn-outline-primary">
         <i class="fas fa-arrow-left me-2"></i>
         Quay lại danh sách
-      </a>
+      </button>
     </div>
   </div>
 
@@ -115,7 +115,7 @@
         </div>
 
         <!-- Email Footer -->
-        <div class="card-footer bg-light border-top py-3">
+        <!-- <div class="card-footer bg-light border-top py-3">
           <div class="d-flex justify-content-between align-items-center">
             <small class="text-muted">
               <i class="fas fa-info-circle me-1"></i>
@@ -132,7 +132,7 @@
               </button>
             </div>
           </div>
-        </div>
+        </div> -->
       </div>
     </div>
   </div>
@@ -165,11 +165,25 @@
   });
 
   // Delete email
-  document.getElementById('deleteEmail')?.addEventListener('click', function () {
+  document.getElementById('deleteEmail')?.addEventListener('click', async function () {
     if (confirm('Bạn có chắc chắn muốn xóa email này?')) {
-      // Implement delete functionality
-      console.log('Delete email:', emailId);
-      // window.location.href = '/emails';
+      try {
+        const response = await fetch(`/emails/${emailId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        const result = await response.json();
+        if (result.success) {
+          location.href = '/emails';
+        } else {
+          alert('Có lỗi xảy ra: ' + result.message);
+        }
+      } catch (error) {
+        console.error('Error deleting email:', error);
+        alert('Có lỗi xảy ra khi xóa email');
+      }
     }
   });
 
