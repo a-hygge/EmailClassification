@@ -2,8 +2,6 @@ import db from '../models/index.js';
 import { Op } from 'sequelize';
 import emailDAO from '../dao/emailDAO.js';
 
-const { Email, EmailRecipient, Label, User } = db;
-
 class EmailController {
 
   // GET /emails - Danh sách tất cả email
@@ -16,7 +14,7 @@ class EmailController {
       const offset = (page - 1) * limit;
 
       // Lấy danh sách email của user
-      const { count, rows: emailRecipients } = await emailDAO.findByLabelWithPagination(userId, limit, offset);
+      const { count, rows: emailRecipients } = await emailDAO.findAllWithPagination(userId, limit, offset);
 
       // Lấy tất cả labels
       const allLabels = await emailDAO.findAllLabels();
