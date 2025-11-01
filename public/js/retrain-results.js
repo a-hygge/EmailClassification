@@ -211,14 +211,21 @@ async function saveTrainedModel() {
     return;
   }
   
+  // Prompt user for model and dataset names
+  const modelName = prompt('Nhập tên version cho model (ví dụ: 2.0.0):', `v${Date.now()}`);
+  if (!modelName) return;
+  
+  const datasetName = prompt('Nhập tên cho dataset:', `dataset_${new Date().toISOString().split('T')[0]}`);
+  if (!datasetName) return;
+  
+  const datasetDescription = prompt('Nhập mô tả cho dataset (optional):', 'Training dataset for email classification');
+  
   try {
     const saveBtn = document.getElementById('saveModelBtn');
     if (saveBtn) {
       saveBtn.disabled = true;
-      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang lưu...';
+      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang lưu Model và Dataset...';
     }
-    
-    const modelName = `retrained_model_${Date.now()}`;
     
     const response = await fetch(`/retrain/save/${currentJobId}`, {
       method: 'POST',
@@ -226,21 +233,40 @@ async function saveTrainedModel() {
         'Content-Type': 'application/json'
       },
       credentials: 'include',
-      body: JSON.stringify({ modelName })
+      body: JSON.stringify({ 
+        modelName,
+        datasetName,
+        datasetDescription: datasetDescription || 'Training dataset'
+      })
     });
     
     const result = await response.json();
     
     if (result.success) {
-      alert('Mô hình đã được lưu thành công!\nĐường dẫn: ' + result.modelPath);
+      alert(
+        '✅ Lưu thành công!\n\n' +
+        '📦 Model: ' + result.model.version + '\n' +
+        '   - Path: ' + result.model.path + '\n' +
+        '   - Accuracy: ' + (result.model.accuracy * 100).toFixed(2) + '%\n\n' +
+        '📊 Dataset: ' + result.dataset.name + '\n' +
+        '   - Samples: ' + result.dataset.quantity + ' emails\n' +
+        '   - Description: ' + result.dataset.description
+      );
       
       if (saveBtn) {
-        saveBtn.innerHTML = '<i class="fas fa-check me-2"></i>Đã lưu';
+        saveBtn.innerHTML = '<i class="fas fa-check me-2"></i>Đã lưu thành công';
         saveBtn.classList.remove('btn-success');
         saveBtn.classList.add('btn-secondary');
       }
+      
+      // Optionally redirect to dashboard or models list
+      setTimeout(() => {
+        if (confirm('Bạn có muốn quay lại Dashboard?')) {
+          window.location.href = '/dashboard';
+        }
+      }, 1000);
     } else {
-      alert('Lỗi khi lưu mô hình: ' + result.error);
+      alert('❌ Lỗi khi lưu: ' + result.error);
       
       if (saveBtn) {
         saveBtn.disabled = false;
@@ -249,7 +275,7 @@ async function saveTrainedModel() {
     }
   } catch (error) {
     console.error('Error saving model:', error);
-    alert('Lỗi khi lưu mô hình: ' + error.message);
+    alert('❌ Lỗi khi lưu: ' + error.message);
     
     const saveBtn = document.getElementById('saveModelBtn');
     if (saveBtn) {

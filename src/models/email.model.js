@@ -5,13 +5,14 @@ export default (sequelize) => {
     "Email",
     {
       id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-      title: { type: DataTypes.STRING(255), allowNull: false },
-      content: { type: DataTypes.TEXT, allowNull: false },
-      labelId: { type: DataTypes.INTEGER, allowNull: true },
-      userId: { type: DataTypes.INTEGER, allowNull: true },
-      datasetId: { type: DataTypes.INTEGER, allowNull: true },
+      title: { type: DataTypes.STRING(255), allowNull: true },
+      content: { type: DataTypes.STRING(5000), allowNull: true },
+      tblLabelId: { type: DataTypes.INTEGER, allowNull: true },
     },
-    { timestamps: true }
+    { 
+      timestamps: false,
+      tableName: 'tblEmail'
+    }
   );
 
   return Email;

@@ -6,7 +6,6 @@ import retrainService from "../services/retrainService.js";
 import emailDao from "../dao/emailDao.js";
 import labelDao from "../dao/labelDao.js";
 import modelDao from "../dao/modelDao.js";
-import db from "../models/index.js";
 
 class RetrainController {
   /**
@@ -79,29 +78,30 @@ class RetrainController {
 
   /**
    * GET /retrain/samples - Get all samples for selection
+   * Lấy danh sách email samples (có label) để user chọn
    */
   async getSamples(req, res) {
     try {
-      const samples = await emailDao.findAll({
-        include: [{ model: db.Label, as: "Label" }],
-        order: [["createdAt", "DESC"]],
-        limit: 10000, // Limit for performance
-      });
-
+      // Lấy sample emails (emails có label)
+      const samples = await emailDao.getSampleList();
       const labels = await labelDao.findAll();
 
       const formattedSamples = samples.map((email) => ({
         id: email.id,
         title: email.title,
         content: email.content.substring(0, 100) + "...", // Preview
-        labelId: email.labelId,
-        labelName: email.Label?.name || "Unknown",
+        tblLabelId: email.tblLabelId,
+        labelName: email.label?.name || "Unknown",
       }));
 
       res.json({
         success: true,
         samples: formattedSamples,
-        labels: labels.map((l) => ({ id: l.id, name: l.name })),
+        labels: labels.map((l) => ({ 
+          id: l.id, 
+          name: l.name,
+          description: l.description 
+        })),
       });
     } catch (error) {
       console.error("Error getting samples:", error);
@@ -114,19 +114,32 @@ class RetrainController {
    */
   async getModels(req, res) {
     try {
-      const models = await modelDao.findAllActive();
+      const models = await modelDao.getModelList();
 
       res.json({
         success: true,
-        models: models.map((m) => ({
-          id: m.id,
-          name: m.version,
-          path: m.path,
-          accuracy: m.accuracy,
-          precision: m.precision,
-          recall: m.recall,
-          f1Score: m.f1Score,
-        })),
+        models: models.map((m) => {
+          // Extract model name from path (email_cnn_model.h5 -> CNN)
+          const pathParts = m.path.split('/').pop(); // Get filename
+          const modelName = pathParts
+            .replace('email_', '')
+            .replace('_model.h5', '')
+            .replace('_', '+')
+            .toUpperCase(); // cnn -> CNN, bilstm_cnn -> BiLSTM+CNN
+
+          return {
+            id: m.id,
+            name: modelName,
+            version: m.version,
+            path: m.path,
+            accuracy: m.accuracy,
+            precision: m.precision,
+            recall: m.recall,
+            f1Score: m.f1Score,
+            isActive: m.isActive,
+            createdAt: m.createdAt,
+          };
+        }),
       });
     } catch (error) {
       console.error("Error getting models:", error);
@@ -136,6 +149,8 @@ class RetrainController {
 
   /**
    * POST /retrain/start - Start training
+   * User đã chọn samples, giờ bắt đầu training
+   * Samples được đóng gói thành Dataset object nhưng CHƯA lưu DB
    */
   async startRetraining(req, res) {
     try {
@@ -150,6 +165,7 @@ class RetrainController {
       const userId = req.session.user.id;
       const config = req.body;
 
+      // Start training (dataset chưa được lưu DB tại đây)
       const result = await retrainService.startTraining(userId, config);
       res.json(result);
     } catch (error) {
@@ -188,15 +204,21 @@ class RetrainController {
 
   /**
    * POST /retrain/save/:jobId - Save trained model
+   * User ấn SAVE sau khi xem kết quả training
+   * Tại đây mới lưu Dataset và Model vào DB
    */
   async saveModel(req, res) {
     try {
       const { jobId } = req.params;
-      const { modelName } = req.body;
+      const { modelName, datasetName, datasetDescription } = req.body;
 
       const result = await retrainService.saveModel(
         parseInt(jobId),
-        modelName || `model_${Date.now()}`
+        {
+          modelName: modelName || `model_${Date.now()}`,
+          datasetName: datasetName || `dataset_${Date.now()}`,
+          datasetDescription: datasetDescription || 'Training dataset'
+        }
       );
 
       res.json(result);

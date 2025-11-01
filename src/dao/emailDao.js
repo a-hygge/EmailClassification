@@ -4,7 +4,7 @@
  */
 import db from '../models/index.js';
 
-const { Email } = db;
+const { Email, Label, User, Dataset } = db;
 
 class EmailDao {
   /**
@@ -14,7 +14,11 @@ class EmailDao {
    */
   async findById(id) {
     try {
-      const email = await Email.findByPk(id);
+      const email = await Email.findByPk(id, {
+        include: [
+          { model: Label, as: 'label' }
+        ]
+      });
       return email;
     } catch (error) {
       console.error('Error finding email by ID:', error);
@@ -57,9 +61,7 @@ class EmailDao {
    * @param {Object} emailData - Email data
    * @param {string} emailData.title - Email title
    * @param {string} emailData.content - Email content
-   * @param {number} emailData.labelId - Label ID (optional)
-   * @param {number} emailData.userId - User ID (optional)
-   * @param {number} emailData.datasetId - Dataset ID (optional)
+   * @param {number} emailData.tblLabelId - Label ID (optional, for samples)
    * @returns {Promise<Object>} Created email object
    */
   async create(emailData) {
@@ -104,7 +106,7 @@ class EmailDao {
       if (!email) {
         return null;
       }
-      await email.update({ labelId });
+      await email.update({ tblLabelId: labelId });
       return email;
     } catch (error) {
       console.error('Error updating email label:', error);
@@ -160,7 +162,52 @@ class EmailDao {
       throw error;
     }
   }
+
+  /**
+   * Get sample emails list (emails with labels)
+   * @returns {Promise<Array>} List of sample emails
+   */
+  async getSampleList() {
+    try {
+      const samples = await Email.findAll({
+        where: {
+          tblLabelId: { [db.sequelize.Sequelize.Op.ne]: null }
+        },
+        include: [
+          { model: Label, as: 'label' }
+        ],
+        order: [['id', 'DESC']]
+      });
+      return samples;
+    } catch (error) {
+      console.error('Error getting sample list:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get emails by IDs (for creating dataset from selected samples)
+   * @param {Array<number>} emailIds - Array of email IDs
+   * @returns {Promise<Array>} Array of emails
+   */
+  async findByIds(emailIds) {
+    try {
+      const emails = await Email.findAll({
+        where: {
+          id: emailIds
+        },
+        include: [
+          { model: Label, as: 'label' }
+        ]
+      });
+      return emails;
+    } catch (error) {
+      console.error('Error finding emails by IDs:', error);
+      throw error;
+    }
+  }
 }
 
 export default new EmailDao();
+
 

@@ -3,55 +3,63 @@ import { sequelize } from '../config/database.js';
 // Import các model
 import UserModel from "./user.model.js";
 import EmailModel from "./email.model.js";
-import EmailRecipientModel from "./emailRecipient.model.js";
+import EmailUserModel from "./emailUser.model.js";
 import DatasetModel from "./dataset.model.js";
+import DatasetEmailModel from "./datasetEmail.model.js";
 import ModelModel from "./model.model.js";
 import LabelModel from "./label.model.js";
-import BlackListTokenModel from "./blackListToken.model.js";
 import TrainingJobModel from "./trainingJob.model.js";
 
 const User = UserModel(sequelize);
 const Email = EmailModel(sequelize);
-const EmailRecipient = EmailRecipientModel(sequelize);
+const EmailUser = EmailUserModel(sequelize);
 const Dataset = DatasetModel(sequelize);
+const DatasetEmail = DatasetEmailModel(sequelize);
 const Model = ModelModel(sequelize);
 const Label = LabelModel(sequelize);
-const BlackListToken = BlackListTokenModel(sequelize);
 const TrainingJob = TrainingJobModel(sequelize);
 
 // ------------------ Thiết lập mối quan hệ ------------------
 
-// User - Email
-User.hasMany(Email, { foreignKey: "userId", as: "emails" });
-Email.belongsTo(User, { foreignKey: "userId", as: "user" });
+// Label - Email (1-n)
+Label.hasMany(Email, { foreignKey: "tblLabelId", as: "emails" });
+Email.belongsTo(Label, { foreignKey: "tblLabelId", as: "label" });
 
-// Label - Email
-Label.hasMany(Email, { foreignKey: "labelId", as: "emails" });
-Email.belongsTo(Label, { foreignKey: "labelId", as: "Label" });
+// Dataset - Model (1-n)
+Dataset.hasMany(Model, { foreignKey: "tblDatasetId", as: "models" });
+Model.belongsTo(Dataset, { foreignKey: "tblDatasetId", as: "dataset" });
 
-// Dataset - Email
-Dataset.hasMany(Email, { foreignKey: "datasetId", as: "emails" });
-Email.belongsTo(Dataset, { foreignKey: "datasetId", as: "dataset" });
+// User - TrainingJob (1-n)
+User.hasMany(TrainingJob, { foreignKey: "tblUserId", as: "trainingJobs" });
+TrainingJob.belongsTo(User, { foreignKey: "tblUserId", as: "user" });
 
-// Dataset - Model
-Dataset.hasMany(Model, { foreignKey: "datasetId", as: "models" });
-Model.belongsTo(Dataset, { foreignKey: "datasetId", as: "dataset" });
+// User - Email (n-n qua EmailUser)
+User.belongsToMany(Email, { 
+  through: EmailUser, 
+  foreignKey: "tblUserId",
+  otherKey: "tblEmailId",
+  as: "emails" 
+});
+Email.belongsToMany(User, { 
+  through: EmailUser, 
+  foreignKey: "tblEmailId",
+  otherKey: "tblUserId",
+  as: "users" 
+});
 
-// EmailRecipient - User
-User.hasMany(EmailRecipient, { foreignKey: "userId", as: "emailRecipients" });
-EmailRecipient.belongsTo(User, { foreignKey: "userId", as: "user" });
-
-// EmailRecipient - Email
-Email.hasMany(EmailRecipient, { foreignKey: "emailId", as: "recipients" });
-EmailRecipient.belongsTo(Email, { foreignKey: "emailId", as: "email" });
-
-// BlackListToken - User
-User.hasMany(BlackListToken, { foreignKey: "userId", as: "blackListTokens" });
-BlackListToken.belongsTo(User, { foreignKey: "userId", as: "user" });
-
-// TrainingJob - User
-User.hasMany(TrainingJob, { foreignKey: "userId", as: "trainingJobs" });
-TrainingJob.belongsTo(User, { foreignKey: "userId", as: "user" });
+// Dataset - Email (n-n qua DatasetEmail)
+Dataset.belongsToMany(Email, { 
+  through: DatasetEmail, 
+  foreignKey: "tblDatasetId",
+  otherKey: "tblEmailId",
+  as: "emails" 
+});
+Email.belongsToMany(Dataset, { 
+  through: DatasetEmail, 
+  foreignKey: "tblEmailId",
+  otherKey: "tblDatasetId",
+  as: "datasets" 
+});
 
 // ------------------------------------------------------------
 
@@ -59,10 +67,10 @@ export default {
   sequelize,
   User,
   Email,
-  EmailRecipient,
+  EmailUser,
   Dataset,
+  DatasetEmail,
   Model,
   Label,
-  BlackListToken,
   TrainingJob,
 };

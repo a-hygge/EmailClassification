@@ -1,10 +1,11 @@
 <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
   <div class="position-sticky pt-3">
+    <% var cp = (typeof currentPage !== 'undefined') ? currentPage : ''; %>
     <!-- Main Navigation -->
     <ul class="nav flex-column mb-3">
       <!-- Dashboard -->
       <li class="nav-item">
-        <a class="nav-link <%= currentPage === 'dashboard' ? 'active' : '' %>" href="/dashboard">
+  <a class="nav-link <%= cp === 'dashboard' ? 'active' : '' %>" href="/dashboard">
           <i class="fas fa-home me-2"></i>
           <span>Dashboard</span>
         </a>
@@ -12,27 +13,27 @@
 
       <!-- All Emails -->
       <li class="nav-item">
-        <a class="nav-link <%= currentPage === 'emails' && !selectedLabel ? 'active' : '' %>" href="/emails">
+  <a class="nav-link <%= cp === 'emails' && !selectedLabel ? 'active' : '' %>" href="/emails">
           <i class="fas fa-inbox me-2"></i>
           <span>Tất cả Email</span>
-          <!-- <% if (typeof stats !=='undefined' && stats.unread> 0) { %>
+          <% if (typeof stats !=='undefined' && stats.unread> 0) { %>
             <span class="badge bg-primary rounded-pill ms-auto">
               <%= stats.unread %>
             </span>
-            <% } %> -->
+            <% } %>
         </a>
       </li>
 
       <!-- Important Emails -->
       <li class="nav-item">
-        <a class="nav-link <%= currentPage === 'ImportantEmails' ? 'active' : '' %>" href="/emails/important">
+  <a class="nav-link <%= cp === 'ImportantEmails' ? 'active' : '' %>" href="/emails/important">
           <i class="fas fa-star me-2 text-warning"></i>
           <span>Quan trọng</span>
-          <!-- <% if (typeof stats !=='undefined' && stats.important> 0) { %>
+          <% if (typeof stats !=='undefined' && stats.important> 0) { %>
             <span class="badge bg-warning rounded-pill ms-auto">
               <%= stats.important %>
             </span>
-            <% } %> -->
+            <% } %>
         </a>
       </li>
     </ul>
@@ -85,7 +86,7 @@
     <!-- Other Actions -->
     <ul class="nav flex-column">
       <li class="nav-item">
-        <a class="nav-link <%= currentPage === 'emailsSystem' ? 'active' : '' %>" href="/emailsSystem">
+  <a class="nav-link <%= cp === 'emailsSystem' ? 'active' : '' %>" href="/emailsSystem">
           <i class="fas fa-envelope me-2"></i>
           <span>List Email System</span>
         </a>
@@ -93,7 +94,7 @@
 
       <!-- Test Classification -->
       <li class="nav-item">
-        <a class="nav-link <%= currentPage === 'test' ? 'active' : '' %>" href="/test/classify">
+  <a class="nav-link <%= cp === 'test' ? 'active' : '' %>" href="/test/classify">
           <i class="fas fa-flask me-2"></i>
           <span>Test Classification</span>
         </a>
@@ -101,7 +102,7 @@
 
       <!-- Retrain Model -->
       <li class="nav-item">
-        <a class="nav-link <%= currentPage === 'retrain' ? 'active' : '' %>" href="/retrain">
+  <a class="nav-link <%= cp === 'retrain' ? 'active' : '' %>" href="/retrain">
           <i class="fas fa-sync-alt me-2"></i>
           <span>Retrain Model</span>
         </a>

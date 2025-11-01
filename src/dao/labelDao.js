@@ -41,9 +41,16 @@ class LabelDao {
     }
   }
 
-  async create(name) {
+  /**
+   * Create a new label
+   * @param {Object} labelData - Label data
+   * @param {string} labelData.name - Label name
+   * @param {string} labelData.description - Label description (optional)
+   * @returns {Promise<Object>} Created label
+   */
+  async create(labelData) {
     try {
-      const label = await Label.create({ name });
+      const label = await Label.create(labelData);
       return label;
     } catch (error) {
       console.error("Error creating label:", error);
@@ -51,13 +58,21 @@ class LabelDao {
     }
   }
 
-  async update(id, name) {
+  /**
+   * Update a label
+   * @param {number} id - Label ID
+   * @param {Object} updateData - Data to update
+   * @param {string} updateData.name - Label name
+   * @param {string} updateData.description - Label description (optional)
+   * @returns {Promise<Object|null>} Updated label or null
+   */
+  async update(id, updateData) {
     try {
       const label = await Label.findByPk(id);
       if (!label) {
         return null;
       }
-      await label.update({ name });
+      await label.update(updateData);
       return label;
     } catch (error) {
       console.error("Error updating label:", error);

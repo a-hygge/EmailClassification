@@ -44,9 +44,17 @@ function validateConfiguration() {
 // Get configuration from form
 function getConfiguration() {
   const selectedSamples = JSON.parse(sessionStorage.getItem('selectedSamples') || '[]');
+  const modelType = document.getElementById('modelType');
+  const modelValue = modelType.value;
+
+  console.log('📋 Getting configuration:', {
+    modelValue,
+    selectedSamplesCount: selectedSamples.length
+  });
 
   return {
-    modelId: parseInt(document.getElementById('modelType').value),
+    modelId: parseInt(modelValue), // Model ID từ value của select
+    modelType: modelType.options[modelType.selectedIndex].text, // Model name (CNN, RNN, etc) - for display only
     sampleIds: selectedSamples,
     hyperparameters: {
       learning_rate: parseFloat(document.getElementById('learningRate').value),
@@ -67,12 +75,20 @@ async function startRetraining() {
     
     const config = getConfiguration();
     
+    // Validate model selection
+    if (!config.modelId || isNaN(config.modelId)) {
+      alert('Vui lòng chọn mô hình để huấn luyện');
+      return;
+    }
+    
     // Check if samples are selected
     if (!config.sampleIds || config.sampleIds.length < 10) {
       alert('Vui lòng chọn ít nhất 10 mẫu trước khi bắt đầu huấn luyện');
       backToSamples();
       return;
     }
+
+    console.log('🚀 Starting training with config:', config);
     
     // Disable retrain button
     const retrainBtn = document.getElementById('retrainBtn');

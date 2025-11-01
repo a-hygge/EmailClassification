@@ -113,8 +113,17 @@ class MLApiClient {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to start retraining');
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.detail || errorData.message || JSON.stringify(errorData);
+        } catch (parseError) {
+          // If response is not JSON, use status text
+          const text = await response.text();
+          errorMessage = text || errorMessage;
+        }
+        console.error('❌ ML API error:', errorMessage);
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
@@ -122,6 +131,10 @@ class MLApiClient {
       return result;
     } catch (error) {
       console.error('ML API startRetraining error:', error);
+      // If error is from fetch failure (network error)
+      if (error.cause) {
+        throw new Error(`Cannot connect to ML service at ${config.pythonML.url}: ${error.message}`);
+      }
       throw error;
     }
   }
@@ -204,8 +217,16 @@ class MLApiClient {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to save model');
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.detail || errorData.message || JSON.stringify(errorData);
+        } catch (parseError) {
+          const text = await response.text();
+          errorMessage = text || errorMessage;
+        }
+        console.error('❌ ML API save error:', errorMessage);
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();

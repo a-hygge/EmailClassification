@@ -414,9 +414,10 @@ class TrainingService:
         if not job or job['status'] != 'completed':
             raise ValueError(f"Job {job_id} not completed")
 
-        results = job.get('results')
+        # Get full results (includes model objects)
+        results = job.get('_full_results')
         if not results:
-            raise ValueError(f"No results found for job {job_id}")
+            raise ValueError(f"No full results found for job {job_id}")
 
         # Create output directory if not exists
         os.makedirs(output_dir, exist_ok=True)

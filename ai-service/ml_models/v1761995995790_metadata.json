@@ -1,0 +1,22 @@
+{
+  "model_type": "CNN",
+  "max_words": 50000,
+  "max_len": 256,
+  "num_classes": 7,
+  "classes": [
+    "Bảo mật",
+    "Công việc",
+    "Gia đình",
+    "Giao dịch",
+    "Học tập",
+    "Quảng cáo",
+    "Spam"
+  ],
+  "hyperparameters": {
+    "epochs": 10,
+    "batch_size": 32,
+    "learning_rate": 0.001,
+    "max_words": 50000,
+    "max_len": 256
+  }
+}

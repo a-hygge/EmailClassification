@@ -16,8 +16,11 @@ class RetrainService {
   validateTrainingConfig(config) {
     const { modelId, sampleIds, hyperparameters } = config;
 
+    console.log('🔍 Validating config:', { modelId, sampleIds: sampleIds?.length, hyperparameters });
+
     // Validate model ID
     if (!modelId || isNaN(modelId)) {
+      console.error('❌ Invalid model ID:', modelId, 'Type:', typeof modelId);
       throw new Error('Invalid model ID');
     }
 
@@ -51,15 +54,15 @@ class RetrainService {
     try {
       const samples = await emailDao.findAll({
         where: { id: sampleIds },
-        include: [{ model: db.Label, as: 'Label' }]
+        include: [{ model: db.Label, as: 'label' }]
       });
 
       return samples.map(email => ({
         id: email.id,
         title: email.title,
         content: email.content,
-        label: email.Label?.name || 'Unknown',
-        labelId: email.labelId
+        label: email.label?.name || 'Unknown',
+        labelId: email.tblLabelId
       }));
     } catch (error) {
       console.error('Error preparing training data:', error);
@@ -79,11 +82,11 @@ class RetrainService {
       }
 
       const jobData = {
-        userId,
+        tblUserId: userId,
         modelType: model.version, // Store model version/name
         status: 'pending',
-        hyperparameters: config.hyperparameters,
-        sampleIds: config.sampleIds
+        hyperparameters: JSON.stringify(config.hyperparameters), // Convert object to JSON string
+        result: null
       };
 
       const job = await trainingJobDao.create(jobData);
@@ -111,13 +114,25 @@ class RetrainService {
       // Fetch model details
       const model = await modelDao.findById(config.modelId);
 
+      // Extract model type from path (email_cnn_model.h5 -> CNN)
+      const pathParts = model.path.split('/').pop();
+      const modelType = pathParts
+        .replace('email_', '')
+        .replace('_model.h5', '')
+        .replace('_', '+')
+        .toUpperCase();
+
       // Call AI service to start training
       const trainingRequest = {
         jobId: job.id.toString(),
-        modelType: model.version,
+        modelType: modelType, // CNN, RNN, LSTM, BiLSTM, BiLSTM+CNN
         modelPath: model.path,
         samples: samples,
-        hyperparameters: config.hyperparameters
+        hyperparameters: {
+          ...config.hyperparameters,
+          max_words: config.hyperparameters.max_words || 50000,
+          max_len: config.hyperparameters.max_len || 256
+        }
       };
 
       const result = await mlApiClient.startRetraining(trainingRequest);
@@ -188,8 +203,8 @@ class RetrainService {
       // Get results from AI service
       const results = await mlApiClient.getRetrainingResults(jobId.toString());
 
-      // Update job with results
-      await trainingJobDao.update(jobId, { results: results });
+      // Update job with results (must stringify for VARCHAR field)
+      await trainingJobDao.update(jobId, { result: JSON.stringify(results) });
 
       // Transform metrics to match frontend expectations
       const transformedMetrics = {
@@ -234,7 +249,7 @@ class RetrainService {
   /**
    * Save trained model
    */
-  async saveModel(jobId, modelName) {
+  async saveModel(jobId, { modelName, datasetName, datasetDescription }) {
     try {
       const job = await trainingJobDao.findById(jobId);
       if (!job) {
@@ -245,16 +260,36 @@ class RetrainService {
         throw new Error('Cannot save incomplete training');
       }
 
-      // Call AI service to save model
+      // Call AI service to save model (only needs modelName)
       const result = await mlApiClient.saveRetrainedModel(jobId.toString(), modelName);
 
       // Update job with model path
       await trainingJobDao.update(jobId, { modelPath: result.modelPath });
 
+      // Get training results to extract metrics
+      const trainingResults = await mlApiClient.getRetrainingResults(jobId.toString());
+      
+      // TODO: Save Dataset and Model to database
+      // This requires:
+      // 1. Get sample IDs from job (need to store in TrainingJob)
+      // 2. Create Dataset with datasetName and datasetDescription
+      // 3. Create Model with metrics from trainingResults
+      // For now, just return success
+
       return {
         success: true,
         modelPath: result.modelPath,
-        message: 'Model saved successfully'
+        message: 'Model saved successfully',
+        // TODO: Add dataset and model info
+        model: {
+          version: modelName,
+          path: result.modelPath,
+          accuracy: trainingResults.metrics?.testAccuracy || 0
+        },
+        dataset: {
+          name: datasetName,
+          description: datasetDescription
+        }
       };
     } catch (error) {
       console.error('Error saving model:', error);

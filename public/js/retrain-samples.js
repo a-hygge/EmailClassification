@@ -174,7 +174,7 @@ function filterByLabel(labelId) {
   if (labelId === 'all') {
     renderSamples(allSamples);
   } else {
-    const filtered = allSamples.filter(s => s.labelId === parseInt(labelId));
+    const filtered = allSamples.filter(s => s.tblLabelId === parseInt(labelId));
     renderSamples(filtered);
   }
 }

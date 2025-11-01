@@ -4,22 +4,66 @@
  */
 import db from '../models/index.js';
 
-const { Model } = db;
+const { Model, Dataset } = db;
 
 class ModelDao {
   /**
-   * Find all active models
+   * Save retrained model to database
+   * Khi user ấn save sau khi retrain xong
+   * @param {Object} modelData - Model data from training result
+   * @param {string} modelData.path - Path to model file (e.g., 'ml_models/email_cnn_model.h5')
+   * @param {string} modelData.version - Model version (e.g., '1.0.0', '2.0.0')
+   * @param {number} modelData.accuracy - Model accuracy (0-1)
+   * @param {number} modelData.precision - Model precision (0-1)
+   * @param {number} modelData.recall - Model recall (0-1)
+   * @param {number} modelData.f1Score - Model F1 score (0-1)
+   * @param {number} modelData.tblDatasetId - Dataset ID used for training (optional)
+   * @returns {Promise<Object>} Created model
+   */
+  async saveRetrainModel(modelData) {
+    const transaction = await db.sequelize.transaction();
+    try {
+      // Deactivate all current models
+      await Model.update(
+        { isActive: false },
+        { 
+          where: { isActive: true },
+          transaction 
+        }
+      );
+
+      // Create new model with isActive = true
+      const model = await Model.create({
+        ...modelData,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }, { transaction });
+
+      await transaction.commit();
+      return model;
+    } catch (error) {
+      await transaction.rollback();
+      console.error('Error saving retrain model:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get active models list
    * @returns {Promise<Array>} Array of active models
    */
-  async findAllActive() {
+  async getModelList() {
     try {
       const models = await Model.findAll({
-        where: { isActive: 1 },
-        order: [['version', 'ASC']]
+        include: [
+          { model: Dataset, as: 'dataset' }
+        ],
+        order: [['createdAt', 'DESC']]
       });
       return models;
     } catch (error) {
-      console.error('Error finding active models:', error);
+      console.error('Error getting model list:', error);
       throw error;
     }
   }
@@ -31,7 +75,11 @@ class ModelDao {
    */
   async findById(id) {
     try {
-      const model = await Model.findByPk(id);
+      const model = await Model.findByPk(id, {
+        include: [
+          { model: Dataset, as: 'dataset' }
+        ]
+      });
       return model;
     } catch (error) {
       console.error('Error finding model by ID:', error);
@@ -46,7 +94,10 @@ class ModelDao {
   async findAll() {
     try {
       const models = await Model.findAll({
-        order: [['version', 'ASC']]
+        include: [
+          { model: Dataset, as: 'dataset' }
+        ],
+        order: [['createdAt', 'DESC']]
       });
       return models;
     } catch (error) {
@@ -58,6 +109,14 @@ class ModelDao {
   /**
    * Create a new model
    * @param {Object} modelData - Model data
+   * @param {string} modelData.path - Path to model file
+   * @param {string} modelData.version - Model version
+   * @param {number} modelData.accuracy - Model accuracy (0-1)
+   * @param {number} modelData.precision - Model precision (0-1)
+   * @param {number} modelData.recall - Model recall (0-1)
+   * @param {number} modelData.f1Score - Model F1 score (0-1)
+   * @param {boolean} modelData.isActive - Is model active (default: false)
+   * @param {number} modelData.tblDatasetId - Dataset ID (optional)
    * @returns {Promise<Object>} Created model
    */
   async create(modelData) {
@@ -74,6 +133,14 @@ class ModelDao {
    * Update a model
    * @param {number} id - Model ID
    * @param {Object} updateData - Data to update
+   * @param {string} updateData.path - Model path (optional)
+   * @param {string} updateData.version - Model version (optional)
+   * @param {number} updateData.accuracy - Model accuracy (optional)
+   * @param {number} updateData.precision - Model precision (optional)
+   * @param {number} updateData.recall - Model recall (optional)
+   * @param {number} updateData.f1Score - Model F1 score (optional)
+   * @param {boolean} updateData.isActive - Is model active (optional)
+   * @param {number} updateData.tblDatasetId - Dataset ID (optional)
    * @returns {Promise<Object|null>} Updated model or null
    */
   async update(id, updateData) {
@@ -104,7 +171,27 @@ class ModelDao {
       throw error;
     }
   }
+
+  /**
+   * Get currently active model
+   * @returns {Promise<Object|null>} Active model or null
+   */
+  async getActiveModel() {
+    try {
+      const model = await Model.findOne({
+        where: { isActive: true },
+        include: [
+          { model: Dataset, as: 'dataset' }
+        ]
+      });
+      return model;
+    } catch (error) {
+      console.error('Error getting active model:', error);
+      throw error;
+    }
+  }
 }
 
 export default new ModelDao();
+
 

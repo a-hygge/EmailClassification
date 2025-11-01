@@ -7,42 +7,33 @@ export default (sequelize) => {
       primaryKey: true, 
       autoIncrement: true 
     },
-    userId: { 
-      type: DataTypes.INTEGER, 
-      allowNull: false 
-    },
     modelType: { 
-      type: DataTypes.STRING(50), 
-      allowNull: false,
-      comment: 'cnn, rnn, lstm, bilstm, bilstm+cnn'
-    },
-    status: { 
-      type: DataTypes.ENUM('pending', 'running', 'completed', 'failed'), 
-      allowNull: false,
-      defaultValue: 'pending'
-    },
-    hyperparameters: { 
-      type: DataTypes.JSON, 
-      allowNull: true,
-      comment: 'learning_rate, epochs, batch_size, random_state'
-    },
-    sampleIds: { 
-      type: DataTypes.JSON, 
-      allowNull: true,
-      comment: 'Array of email IDs used for training'
-    },
-    results: { 
-      type: DataTypes.JSON, 
-      allowNull: true,
-      comment: 'accuracy, precision, recall, f1, history'
+      type: DataTypes.STRING(255), 
+      allowNull: true
     },
     modelPath: { 
       type: DataTypes.STRING(255), 
       allowNull: true 
     },
+    status: { 
+      type: DataTypes.STRING(255), 
+      allowNull: true
+    },
+    hyperparameters: { 
+      type: DataTypes.STRING(5000), 
+      allowNull: true
+    },
+    result: { 
+      type: DataTypes.STRING(5000), 
+      allowNull: true
+    },
+    tblUserId: { 
+      type: DataTypes.INTEGER, 
+      allowNull: false 
+    },
   }, { 
-    timestamps: true,
-    tableName: 'training_job'
+    timestamps: false,
+    tableName: 'tblTrainingJob'
   });
 
   return TrainingJob;
