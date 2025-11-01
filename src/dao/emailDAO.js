@@ -36,30 +36,37 @@ class EmailDAO {
    * Lấy danh sách email theo label với phân trang
    */
   async findByLabelWithPagination(userId, labelId, limit, offset) {
-    return await EmailRecipient.findAndCountAll({
-      where: { userId },
-      include: [
-        {
-          model: Email,
-          as: 'email',
-          where: { labelId },
-          include: [
-            {
-              model: Label,
-              as: 'Label'
-            },
-            {
-              model: User,
-              as: 'user',
-              attributes: ['id', 'username']
-            }
-          ]
-        }
-      ],
-      limit,
-      offset,
-      order: [['sendTime', 'DESC']]
-    });
+    try {
+      const result = await EmailRecipient.findAndCountAll({
+        where: { userId },
+        include: [
+          {
+            model: Email,
+            as: 'email',
+            where: { labelId },
+            include: [
+              {
+                model: Label,
+                as: 'Label'
+              },
+              {
+                model: User,
+                as: 'user',
+                attributes: ['id', 'username']
+              }
+            ]
+          }
+        ],
+        limit,
+        offset,
+        order: [['sendTime', 'DESC']]
+      });
+
+      return result;
+    } catch (error) {
+      console.error('DAO Error in findByLabelWithPagination:', error);
+      throw error;
+    }
   }
 
   /**
@@ -99,22 +106,6 @@ class EmailDAO {
    */
   async findAllLabels() {
     return await Label.findAll();
-  }
-
-  /**
-   * Đếm số email cho một label
-   */
-  async countEmailsByLabel(userId, labelId) {
-    return await EmailRecipient.count({
-      where: { userId },
-      include: [
-        {
-          model: Email,
-          as: 'email',
-          where: { labelId }
-        }
-      ]
-    });
   }
 
   /**

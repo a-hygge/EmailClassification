@@ -21,25 +21,18 @@ class EmailController {
       // Lấy tất cả labels
       const allLabels = await emailDAO.findAllLabels();
 
-      // Đếm số email cho mỗi label
-      const labelsWithCount = await Promise.all(
-        allLabels.map(async (label) => {
-          const emailCount = await emailDAO.countEmailsByLabel(userId, label.id);
-
-          return {
-            id: label.id,
-            name: label.name,
-            emailCount
-          };
-        })
-      );
+      // Chỉ lấy id và name của labels
+      const labels = allLabels.map(label => ({
+        id: label.id,
+        name: label.name
+      }));
 
       res.render('pages/emails/emails', {
         title: 'Hộp thư - Email Classification System',
         layout: 'layouts/main',
         currentPage: 'emails',
         emails: emailRecipients,
-        labels: labelsWithCount,
+        labels: labels,
         stats: stats,
         pagination: {
           currentPage: page,
@@ -66,22 +59,18 @@ class EmailController {
       const stats = req.session.stats || {};
 
       // Lấy email theo label
-      const { count, rows: emailRecipients } = await emailDAO.findByLabelWithPagination(userId, labelId, limit, offset);
+
+      const result = await emailDAO.findByLabelWithPagination(userId, labelId, limit, offset);
+      const { count, rows: emailRecipients } = result;
 
       // Lấy tất cả labels
       const allLabels = await emailDAO.findAllLabels();
 
-      const labelsWithCount = await Promise.all(
-        allLabels.map(async (label) => {
-          const emailCount = await emailDAO.countEmailsByLabel(userId, label.id);
-
-          return {
-            id: label.id,
-            name: label.name,
-            emailCount
-          };
-        })
-      );
+      // Chỉ lấy id và name của labels
+      const labels = allLabels.map(label => ({
+        id: label.id,
+        name: label.name
+      }));
 
       // Lấy thông tin label đang được chọn
       const selectedLabel = await emailDAO.findLabelById(labelId);
@@ -91,7 +80,7 @@ class EmailController {
         layout: 'layouts/main',
         currentPage: 'emails',
         emails: emailRecipients,
-        labels: labelsWithCount,
+        labels: labels,
         stats: stats,
         pagination: {
           currentPage: page,
@@ -115,7 +104,7 @@ class EmailController {
       const limit = 20;
       const offset = (page - 1) * limit;
       const stats = req.session.stats || {};
-      const labelsWithCount = req.session.labelsWithCount || [];
+      const labels = req.session.labels || [];
 
       const { count, rows: emailRecipients } = await emailDAO.findImportantWithPagination(userId, limit, offset);
       res.render('pages/emails/emails', {
@@ -125,7 +114,7 @@ class EmailController {
         emails: emailRecipients,
         stats: stats,
         selectedLabel: null,
-        labels: labelsWithCount,
+        labels: labels,
         pagination: {
           currentPage: page,
           totalPages: Math.ceil(count / limit),
@@ -145,7 +134,7 @@ class EmailController {
       const userId = req.session.user.id;
       const emailId = parseInt(req.params.id);
       const stats = req.session.stats || {};
-      const labelsWithCount = req.session.labelsWithCount || [];
+      const labels = req.session.labels || [];
 
       const emailRecipient = await emailDAO.findEmailRecipient(userId, emailId);
 
@@ -168,7 +157,7 @@ class EmailController {
         layout: 'layouts/main',
         currentPage: 'emails',
         emailRecipient,
-        labels: labelsWithCount,
+        labels: labels,
         stats: stats,
         selectedLabel: selectedLabel
       });
@@ -246,9 +235,11 @@ class EmailController {
       // Xóa trong EmailRecipient trước
       await emailDAO.deleteEmailRecipient(emailId, transaction);
 
-      // Sau đó xóa email gốc (nếu không còn người nhận nào khác)
+      // Đếm số người nhận còn lại
       const remainingRecipients = await emailDAO.countRemainingRecipients(emailId, transaction);
 
+
+      // Xóa email gốc (nếu không còn người nhận nào khác)
       if (remainingRecipients === 0) {
         await emailDAO.deleteEmail(emailId, transaction);
       }

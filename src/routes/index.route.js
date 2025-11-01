@@ -3,7 +3,6 @@ const router = Router();
 import authRoutes from './authRoutes.js';
 import dashboardRoutes from './dashboardRoutes.js';
 import emailRoutes from './emailRoutes.js';
-import emailSystemRoutes from './emailSystemRoute.js';
 
 // Public routes
 router.use('/auth', authRoutes);
@@ -11,7 +10,6 @@ router.use('/auth', authRoutes);
 // Protected routes (cần login)
 router.use('/dashboard', dashboardRoutes);
 router.use('/emails', emailRoutes);
-router.use('/emailsSystem', emailSystemRoutes);
 
 
 // Home page - redirect

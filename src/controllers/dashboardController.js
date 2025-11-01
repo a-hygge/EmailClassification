@@ -14,27 +14,17 @@ class DashboardController {
       const unreadEmails = await emailRecipientDAO.countUnreadEmails(userId);
       const importantEmails = await emailRecipientDAO.countImportantEmails(userId);
 
-      // Lấy tất cả labels với số lượng email
-      const labels = await emailRecipientDAO.getLabelsWithEmails(userId);
+      // Lấy tất cả labels
+      const allLabels = await emailRecipientDAO.getLabels(userId);
 
-      // Đếm số email cho mỗi label
-      const labelsWithCount = labels.map(label => {
-        const emailCount = label.emails.reduce((count, email) => {
-          return count + email.recipients.length;
-        }, 0);
-
-        return {
-          id: label.id,
-          name: label.name,
-          emailCount
-        };
-      });
+      // Chỉ lấy id và name của labels
+      const labels = allLabels.map(label => ({
+        id: label.id,
+        name: label.name
+      }));
 
       // Lấy emails gần đây
       const recentEmails = await emailRecipientDAO.getRecentEmails(userId, 10);
-
-      // Thống kê theo 7 ngày gần đây
-      const { last7Days, emailsByDay } = await emailRecipientDAO.getEmailStatsByLast7Days(userId);
 
       const stats = {
         total: totalEmails,
@@ -44,16 +34,16 @@ class DashboardController {
       }
 
       req.session.stats = stats;
-      req.session.labelsWithCount = labelsWithCount;
+      req.session.labels = labels;
+
       // ===== RENDER VIEW =====
       res.render('pages/dashboard/dashboard', {
         title: 'Dashboard - Email Classification System',
         layout: 'layouts/main',
         currentPage: 'dashboard',
         stats: stats,
-        labels: labelsWithCount,
+        labels: labels,
         recentEmails,
-        // labelStats: labelStatsMap,
         selectedLabel: null
       });
 
