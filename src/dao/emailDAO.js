@@ -4,7 +4,7 @@
  */
 import db from '../models/index.js';
 
-const { Email } = db;
+const { Email, EmailRecipient, Label, User } = db;
 
 class EmailDao {
   /**
@@ -33,6 +33,40 @@ class EmailDao {
       return emails;
     } catch (error) {
       console.error('Error finding all emails:', error);
+      throw error;
+    }
+  }
+
+  async findByLabelWithPagination(userId, labelId, limit, offset) {
+    try {
+      const result = await EmailRecipient.findAndCountAll({
+        where: { userId },
+        include: [
+          {
+            model: Email,
+            as: 'email',
+            where: { labelId },
+            include: [
+              {
+                model: Label,
+                as: 'Label'
+              },
+              {
+                model: User,
+                as: 'user',
+                attributes: ['id', 'username']
+              }
+            ]
+          }
+        ],
+        limit,
+        offset,
+        order: [['sendTime', 'DESC']]
+      });
+
+      return result;
+    } catch (error) {
+      console.error('DAO Error in findByLabelWithPagination:', error);
       throw error;
     }
   }
@@ -97,6 +131,7 @@ class EmailDao {
    * @param {number} id - Email ID
    * @param {number} labelId - Label ID
    * @returns {Promise<Object|null>} Updated email object or null
+   * Lấy label theo ID
    */
   async updateLabel(id, labelId) {
     try {

@@ -165,11 +165,25 @@
   });
 
   // Delete email
-  document.getElementById('deleteEmail')?.addEventListener('click', function () {
+  document.getElementById('deleteEmail')?.addEventListener('click', async function () {
     if (confirm('Bạn có chắc chắn muốn xóa email này?')) {
-      // Implement delete functionality
-      console.log('Delete email:', emailId);
-      // window.location.href = '/emails';
+      try {
+        const response = await fetch(`/emails/${emailId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+        const result = await response.json();
+        if (result.success) {
+          location.href = '/emails';
+        } else {
+          alert('Có lỗi xảy ra: ' + result.message);
+        }
+      } catch (error) {
+        console.error('Error deleting email:', error);
+        alert('Có lỗi xảy ra khi xóa email');
+      }
     }
   });
 
