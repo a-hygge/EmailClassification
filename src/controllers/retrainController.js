@@ -3,7 +3,7 @@
  * Handles HTTP requests for model retraining
  */
 import retrainService from "../services/retrainService.js";
-import emailDao from "../dao/emailDao.js";
+import emailDAO from "../dao/emailDAO.js";
 import labelDao from "../dao/labelDao.js";
 import modelDao from "../dao/modelDao.js";
 import db from "../models/index.js";
@@ -82,7 +82,7 @@ class RetrainController {
    */
   async getSamples(req, res) {
     try {
-      const samples = await emailDao.findAll({
+      const samples = await emailDAO.findAll({
         include: [{ model: db.Label, as: "Label" }],
         order: [["createdAt", "DESC"]],
         limit: 10000, // Limit for performance
