@@ -1,5 +1,6 @@
 import db from '../models/index.js';
 import { Op } from 'sequelize';
+import emailRecipientDAO from '../dao/emailRecipientDAO.js';
 
 const { User, Email, EmailRecipient, Label, sequelize } = db;
 
@@ -7,44 +8,14 @@ class DashboardController {
   async index(req, res) {
     try {
       const userId = req.session.user.id;
-      // Tổng số email người dùng nhận được
-      const totalEmails = await EmailRecipient.count({
-        where: { userId }
-      });
 
-      // Số email chưa đọc
-      const unreadEmails = await EmailRecipient.count({
-        where: {
-          userId,
-          isRead: 0
-        }
-      });
+      // Sử dụng DAO để lấy dữ liệu
+      const totalEmails = await emailRecipientDAO.countTotalEmails(userId);
+      const unreadEmails = await emailRecipientDAO.countUnreadEmails(userId);
+      const importantEmails = await emailRecipientDAO.countImportantEmails(userId);
 
-      // Số email quan trọng
-      const importantEmails = await EmailRecipient.count({
-        where: {
-          userId,
-          isImportant: 1
-        }
-      });
-
-      // LẤY TẤT CẢ LABELS VỚI SỐ LƯỢNG EMAIL
-      const labels = await Label.findAll({
-        include: [
-          {
-            model: Email,
-            as: 'emails',
-            include: [
-              {
-                model: EmailRecipient,
-                as: 'recipients',
-                where: { userId },
-                required: false
-              }
-            ]
-          }
-        ]
-      });
+      // Lấy tất cả labels với số lượng email
+      const labels = await emailRecipientDAO.getLabelsWithEmails(userId);
 
       // Đếm số email cho mỗi label
       const labelsWithCount = labels.map(label => {
@@ -59,67 +30,11 @@ class DashboardController {
         };
       });
 
-      //LẤY EMAILS GẦN ĐÂY 
-      const recentEmails = await EmailRecipient.findAll({
-        where: { userId },
-        include: [
-          {
-            model: Email,
-            as: 'email',
-            include: [
-              {
-                model: Label,
-                as: 'Label'
-              },
-              {
-                model: User,
-                as: 'user',
-                attributes: ['id', 'username']
-              }
-            ]
-          }
-        ],
-        order: [['sendTime', 'DESC']],
-        limit: 10
-      });
+      // Lấy emails gần đây
+      const recentEmails = await emailRecipientDAO.getRecentEmails(userId, 10);
 
-      // const labelStatsMap = {};
-
-      // for (const label of labels) {
-      //   let count = 0;
-      //   for (const email of label.emails) {
-      //     count += email.recipients.length;
-      //   }
-      //   labelStatsMap[label.name] = count;
-      // }
-
-      // ===== THỐNG KÊ THEO NGÀY (7 ngày gần đây) =====
-      const last7Days = [];
-      const emailsByDay = [];
-
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        date.setHours(0, 0, 0, 0);
-
-        const nextDate = new Date(date);
-        nextDate.setDate(nextDate.getDate() + 1);
-
-        const count = await EmailRecipient.count({
-          where: {
-            userId,
-            sendTime: {
-              [Op.gte]: date,
-              [Op.lt]: nextDate
-            }
-          }
-        });
-
-        // Format ngày
-        const dayName = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][date.getDay()];
-        last7Days.push(dayName);
-        emailsByDay.push(count);
-      }
+      // Thống kê theo 7 ngày gần đây
+      const { last7Days, emailsByDay } = await emailRecipientDAO.getEmailStatsByLast7Days(userId);
 
       const stats = {
         total: totalEmails,

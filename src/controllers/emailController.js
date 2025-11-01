@@ -1,5 +1,6 @@
 import db from '../models/index.js';
 import { Op } from 'sequelize';
+import emailDAO from '../dao/emailDAO.js';
 
 const { Email, EmailRecipient, Label, User } = db;
 
@@ -15,46 +16,15 @@ class EmailController {
       const offset = (page - 1) * limit;
 
       // Lấy danh sách email của user
-      const { count, rows: emailRecipients } = await EmailRecipient.findAndCountAll({
-        where: { userId },
-        include: [
-          {
-            model: Email,
-            as: 'email',
-            include: [
-              {
-                model: Label,
-                as: 'Label'
-              },
-              {
-                model: User,
-                as: 'user',
-                attributes: ['id', 'username']
-              }
-            ]
-          }
-        ],
-        limit,
-        offset,
-        order: [['sendTime', 'DESC']]
-      });
+      const { count, rows: emailRecipients } = await emailDAO.findAllWithPagination(userId, limit, offset);
 
       // Lấy tất cả labels
-      const allLabels = await Label.findAll();
+      const allLabels = await emailDAO.findAllLabels();
 
       // Đếm số email cho mỗi label
       const labelsWithCount = await Promise.all(
         allLabels.map(async (label) => {
-          const emailCount = await EmailRecipient.count({
-            where: { userId },
-            include: [
-              {
-                model: Email,
-                as: 'email',
-                where: { labelId: label.id }
-              }
-            ]
-          });
+          const emailCount = await emailDAO.countEmailsByLabel(userId, label.id);
 
           return {
             id: label.id,
@@ -96,46 +66,14 @@ class EmailController {
       const stats = req.session.stats || {};
 
       // Lấy email theo label
-      const { count, rows: emailRecipients } = await EmailRecipient.findAndCountAll({
-        where: { userId },
-        include: [
-          {
-            model: Email,
-            as: 'email',
-            where: { labelId },
-            include: [
-              {
-                model: Label,
-                as: 'Label'
-              },
-              {
-                model: User,
-                as: 'user',
-                attributes: ['id', 'username']
-              }
-            ]
-          }
-        ],
-        limit,
-        offset,
-        order: [['sendTime', 'DESC']]
-      });
+      const { count, rows: emailRecipients } = await emailDAO.findByLabelWithPagination(userId, labelId, limit, offset);
 
       // Lấy tất cả labels
-      const allLabels = await Label.findAll();
+      const allLabels = await emailDAO.findAllLabels();
 
       const labelsWithCount = await Promise.all(
         allLabels.map(async (label) => {
-          const emailCount = await EmailRecipient.count({
-            where: { userId },
-            include: [
-              {
-                model: Email,
-                as: 'email',
-                where: { labelId: label.id }
-              }
-            ]
-          });
+          const emailCount = await emailDAO.countEmailsByLabel(userId, label.id);
 
           return {
             id: label.id,
@@ -146,7 +84,7 @@ class EmailController {
       );
 
       // Lấy thông tin label đang được chọn
-      const selectedLabel = await Label.findByPk(labelId);
+      const selectedLabel = await emailDAO.findLabelById(labelId);
 
       res.render('pages/emails/emails', {
         title: `${selectedLabel.name} - Email Classification System`,
@@ -179,32 +117,7 @@ class EmailController {
       const stats = req.session.stats || {};
       const labelsWithCount = req.session.labelsWithCount || [];
 
-      const { count, rows: emailRecipients } = await EmailRecipient.findAndCountAll({
-        where: {
-          userId,
-          isImportant: 1
-        },
-        include: [
-          {
-            model: Email,
-            as: 'email',
-            include: [
-              {
-                model: Label,
-                as: 'Label'
-              },
-              {
-                model: User,
-                as: 'user',
-                attributes: ['id', 'username']
-              }
-            ]
-          }
-        ],
-        limit,
-        offset,
-        order: [['sendTime', 'DESC']]
-      });
+      const { count, rows: emailRecipients } = await emailDAO.findImportantWithPagination(userId, limit, offset);
       res.render('pages/emails/emails', {
         title: 'Email Quan Trọng - Email Classification System',
         layout: 'layouts/main',
@@ -234,29 +147,7 @@ class EmailController {
       const stats = req.session.stats || {};
       const labelsWithCount = req.session.labelsWithCount || [];
 
-      const emailRecipient = await EmailRecipient.findOne({
-        where: {
-          userId,
-          emailId
-        },
-        include: [
-          {
-            model: Email,
-            as: 'email',
-            include: [
-              {
-                model: Label,
-                as: 'Label'
-              },
-              {
-                model: User,
-                as: 'user',
-                attributes: ['id', 'username']
-              }
-            ]
-          }
-        ]
-      });
+      const emailRecipient = await emailDAO.findEmailRecipient(userId, emailId);
 
       if (!emailRecipient) {
         return res.status(404).send('Email not found');
@@ -264,12 +155,12 @@ class EmailController {
 
       const selectedLabelId = req.params.labelId ? parseInt(req.params.labelId) : null;
       const selectedLabel = selectedLabelId
-        ? await Label.findByPk(selectedLabelId)
+        ? await emailDAO.findLabelById(selectedLabelId)
         : null;
 
       // Đánh dấu đã đọc
       if (emailRecipient.isRead === 0) {
-        await emailRecipient.update({ isRead: 1 });
+        await emailDAO.markAsRead(emailRecipient);
       }
 
       res.render('pages/emails/emailDetail', {
@@ -294,15 +185,13 @@ class EmailController {
       const userId = req.session.user.id;
       const emailId = parseInt(req.params.id);
 
-      const emailRecipient = await EmailRecipient.findOne({
-        where: { userId, emailId }
-      });
+      const emailRecipient = await emailDAO.findSimpleEmailRecipient(userId, emailId);
 
       if (!emailRecipient) {
         return res.status(404).json({ success: false, message: 'Email not found' });
       }
 
-      await emailRecipient.update({ isRead: 1 });
+      await emailDAO.markAsRead(emailRecipient);
 
       res.json({ success: true, message: 'Đã đánh dấu đã đọc' });
 
@@ -318,16 +207,14 @@ class EmailController {
       const userId = req.session.user.id;
       const emailId = parseInt(req.params.id);
 
-      const emailRecipient = await EmailRecipient.findOne({
-        where: { userId, emailId }
-      });
+      const emailRecipient = await emailDAO.findSimpleEmailRecipient(userId, emailId);
 
       if (!emailRecipient) {
         return res.status(404).json({ success: false, message: 'Email not found' });
       }
 
       const newValue = emailRecipient.isImportant === 1 ? 0 : 1;
-      await emailRecipient.update({ isImportant: newValue });
+      await emailDAO.toggleImportant(emailRecipient, newValue);
 
       res.json({
         success: true,
@@ -349,9 +236,7 @@ class EmailController {
       const userId = req.session.user.id;
 
       // Xoá bản ghi trong EmailRecipient
-      const emailRecipient = await EmailRecipient.findOne({
-        where: { emailId, userId }
-      });
+      const emailRecipient = await emailDAO.findEmailRecipientForDelete(emailId, userId);
 
       if (!emailRecipient) {
         await transaction.rollback();
@@ -359,22 +244,13 @@ class EmailController {
       }
 
       // Xóa trong EmailRecipient trước
-      await EmailRecipient.destroy({
-        where: { emailId },
-        transaction: transaction
-      });
+      await emailDAO.deleteEmailRecipient(emailId, transaction);
 
       // Sau đó xóa email gốc (nếu không còn người nhận nào khác)
-      const remainingRecipients = await EmailRecipient.count({
-        where: { emailId },
-        transaction: transaction
-      });
+      const remainingRecipients = await emailDAO.countRemainingRecipients(emailId, transaction);
 
       if (remainingRecipients === 0) {
-        await Email.destroy({
-          where: { id: emailId },
-          transaction: transaction
-        });
+        await emailDAO.deleteEmail(emailId, transaction);
       }
 
       await transaction.commit();
