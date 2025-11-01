@@ -1,4 +1,4 @@
-<nav id="sidebar" class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+<nav id="sidebar" class="bg-light sidebar">
   <div class="position-sticky pt-3">
     <!-- Main Navigation -->
     <ul class="nav flex-column mb-3">
@@ -112,9 +112,14 @@
 
 <style>
   .sidebar {
-    min-height: calc(100vh - 56px);
+    height: calc(100vh - 56px);
+    position: fixed;
+    top: 56px;
+    left: 0;
+    z-index: 100;
     box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
     overflow-y: auto;
+    width: 250px;
   }
 
   .sidebar .nav-link {
