@@ -50,12 +50,12 @@ BlackListToken.belongsTo(User, { foreignKey: "userId", as: "user" });
 // ------------------------------------------------------------
 
 export default {
-  sequelize,
-  User,
-  Email,
-  EmailRecipient,
-  Dataset,
-  Model,
-  Label,
-  BlackListToken,
+    sequelize,
+    User,
+    Email,
+    EmailRecipient,
+    Dataset,
+    Model,
+    Label,
+    BlackListToken,
 };

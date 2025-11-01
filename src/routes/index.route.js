@@ -4,6 +4,7 @@ import authRoutes from './authRoutes.js';
 import dashboardRoutes from './dashboardRoutes.js';
 import emailRoutes from './emailRoutes.js';
 import emailSystemRoutes from './emailSystemRoute.js';
+import sendEmailRoute from "./sendEmailRoute.js";
 
 // Public routes
 router.use('/auth', authRoutes);
@@ -12,13 +13,14 @@ router.use('/auth', authRoutes);
 router.use('/dashboard', dashboardRoutes);
 router.use('/emails', emailRoutes);
 router.use('/emailsSystem', emailSystemRoutes);
+router.use("/sendEmail", sendEmailRoute);
 
 
 // Home page - redirect
 router.get('/', (req, res) => {
-  if (req.session.user) {
-    return res.redirect('/dashboard');
-  }
-  res.redirect('/auth/login');
+    if (req.session.user) {
+        return res.redirect('/dashboard');
+    }
+    res.redirect('/auth/login');
 });
 export default router;
