@@ -59,7 +59,7 @@
                                             <td class="align-middle">
                                                 <% if (email.recipients && email.recipients.length > 0) { %>
                                                     <% email.recipients.forEach((recipient, index) => { %>
-                                                        <span><%= recipient.receiver?.username || 'Không rõ' %></span>
+                                                        <span><%= recipient || 'Không rõ' %></span>
                                                         <% if (index < email.recipients.length - 1) { %>,
                                                             <% } %>
                                                                 <% }) %>
@@ -67,6 +67,7 @@
                                                                         <em class="text-muted">Không có người nhận</em>
                                                                         <% } %>
                                             </td>
+
 
                                             <!-- Tiêu đề -->
                                             <td class="align-middle">

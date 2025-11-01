@@ -1,127 +1,5 @@
 /*import db from "../models/index.js";
 import { Op } from "sequelize";
-const { User, Email, EmailRecipient } = db;
-
-// [GET] /email/send
-export const showSendEmailPage = (req, res) => {
-    if (!req.session.user) return res.redirect('/auth/login');
-
-    const user = req.session.user;
-
-    res.render("pages/emails/sendEmail", {
-        user,
-        title: "Soạn Email",
-        stats: { unread: 0 } // navbar không lỗi
-    });
-};
-
-// [GET] /email/search?keyword=
-export const searchUser = async(req, res) => {
-    if (!req.session.user) return res.status(401).json({ error: "Chưa đăng nhập" });
-
-    try {
-        const keyword = req.query.keyword || "";
-        if (!keyword.trim()) return res.json([]);
-
-        const users = await User.findAll({
-            where: {
-                username: {
-                    [Op.like]: `%${keyword}%`
-                }
-            },
-            attributes: ["username"],
-            limit: 10
-        });
-
-        res.json(users.map(u => u.username));
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
-
-// [POST] /email/send
-export const sendEmail = async(req, res) => {
-    if (!req.session.user) return res.redirect('/auth/login');
-
-    try {
-        const { recipients, title, content } = req.body;
-        const senderId = req.session.user.id;
-
-        if (!recipients || !recipients.trim()) throw new Error("Vui lòng nhập ít nhất 1 người nhận.");
-
-        email = await Email.create({
-            senderId,
-            title,
-            content,
-            sentAt: new Date()
-        });
-
-
-        const usernames = [...new Set(recipients.split(',').map(u => u.trim()).filter(u => u.length > 0))];
-        const users = await User.findAll({
-            where: {
-                username: {
-                    [Op.in]: usernames
-                }
-            },
-            attributes: ["id", "username"]
-        });
-
-        if (!users.length) throw new Error("Không tìm thấy người nhận hợp lệ.");
-
-        // Sửa đúng cột userId và thêm sendTime
-        const recipientList = users.map(u => ({
-            emailId: email.id,
-            userId: u.id,
-            sendTime: new Date()
-        }));
-
-        await EmailRecipient.bulkCreate(recipientList);
-
-        res.render("pages/emails/sendEmail", {
-            success: "Gửi email thành công!",
-            user: req.session.user,
-            title: "Soạn Email",
-            stats: { unread: 0 }
-        });
-    } catch (error) {
-        res.render("pages/emails/sendEmail", {
-            error: "Không thể gửi email! " + error.message,
-            user: req.session.user,
-            title: "Soạn Email",
-            stats: { unread: 0 }
-        });
-    }
-};
-
-// [GET] /email/inbox
-export const inbox = async(req, res) => {
-    if (!req.session.user) return res.redirect('/auth/login');
-
-    const userId = req.session.user.id;
-
-    try {
-        const inboxEmails = await EmailRecipient.findAll({
-            where: { userId }, // sửa cột đúng
-            include: [{
-                model: Email,
-                include: [{ model: User, as: "sender", attributes: ["username", "email"] }]
-            }]
-        });
-
-        res.render("pages/emails/inbox", {
-            emails: inboxEmails,
-            user: req.session.user,
-            title: "Hộp thư đến",
-            stats: { unread: inboxEmails.length }
-        });
-    } catch (error) {
-        res.status(500).send("Không thể tải hộp thư đến");
-    }
-};*/
-
-import db from "../models/index.js";
-import { Op } from "sequelize";
 const { User, Email, EmailRecipient, sequelize } = db;
 
 // [GET] /email/send
@@ -225,40 +103,7 @@ export const sendEmail = async(req, res) => {
     }
 };
 
-// [GET] /email/sent (Danh sách email đã gửi)
-/*export const sent = async(req, res) => {
-    if (!req.session.user) return res.redirect('/auth/login');
 
-    const userId = req.session.user.id;
-
-    try {
-        // Lấy danh sách email do người dùng hiện tại gửi đi
-        const sentEmails = await Email.findAll({
-            where: { userId }, // userId = người gửi
-            order: [
-                ["createdAt", "DESC"]
-            ]
-        });
-
-        res.render("pages/emails/sent", {
-            emails: sentEmails,
-            user: req.session.user,
-            title: "Email đã gửi",
-            currentPage: "sent",
-            stats: { totalSent: sentEmails.length }
-        });
-
-    } catch (error) {
-        console.error("Lỗi khi tải danh sách email đã gửi:", error);
-        res.render("pages/emails/sent", {
-            error: "Không thể tải danh sách email đã gửi: " + error.message,
-            emails: [],
-            user: req.session.user,
-            title: "Email đã gửi",
-            currentPage: "sent"
-        });
-    }
-};*/
 // [GET] /email/sent
 export const sent = async(req, res) => {
     if (!req.session.user) return res.redirect("/auth/login");
@@ -317,6 +162,140 @@ export const sent = async(req, res) => {
             stats: { totalSent: emailsWithRecipients.length }
         });
 
+    } catch (error) {
+        console.error("Lỗi khi tải danh sách email đã gửi:", error);
+        res.render("pages/emails/sent", {
+            error: "Không thể tải danh sách email đã gửi: " + error.message,
+            emails: [],
+            user: req.session.user,
+            title: "Email đã gửi",
+            currentPage: "sent"
+        });
+    }
+};*/
+// import toàn bộ db
+import db from "../models/index.js";
+
+// lấy sequelize từ db
+const { sequelize } = db;
+
+// import dao (giữ nguyên nếu dao export từng hàm)
+import * as userDao from "../dao/userDao.js";
+import * as emailDao from "../dao/emailDAO.js"; // chú ý tên file: emailDao.js
+
+
+// [GET] /email/send
+export const showSendEmailPage = async(req, res) => {
+    if (!req.session.user) return res.redirect('/auth/login');
+
+    try {
+        const userId = req.session.user.id;
+
+        // Lấy user từ DB qua DAO
+        const user = await userDao.getUserById(userId);
+
+        // Lấy stats email chưa đọc
+        const stats = await userDao.getUnreadStats(userId);
+
+        res.render("pages/emails/sendEmail", {
+            user,
+            title: "Soạn Email",
+            stats
+        });
+    } catch (error) {
+        console.error("Lỗi khi tải trang soạn email:", error);
+        res.render("pages/emails/sendEmail", {
+            user: req.session.user,
+            title: "Soạn Email",
+            stats: { unread: 0 },
+            error: "Không thể tải thông tin người dùng."
+        });
+    }
+};
+
+// [GET] /email/search?keyword=
+export const searchUser = async(req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: "Chưa đăng nhập" });
+
+    try {
+        const keyword = (req.query.keyword || "").trim();
+        if (!keyword) return res.json([]);
+
+        const users = await userDao.searchUsersByKeyword(keyword);
+        res.json(users.map(u => u.username));
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// [POST] /email/send
+export const sendEmail = async(req, res) => {
+    if (!req.session.user) return res.redirect('/auth/login');
+
+    const t = await sequelize.transaction();
+
+    try {
+        const { recipients, title, content } = req.body;
+        const userId = req.session.user.id;
+
+        if (!recipients || !recipients.trim()) throw new Error("Vui lòng nhập ít nhất 1 người nhận.");
+
+        // Tạo email
+        const email = await emailDao.createEmail({ userId, title, content, sentAt: new Date() }, t);
+
+        // Lấy danh sách user nhận hợp lệ
+        const usernames = [...new Set(recipients.split(',').map(u => u.trim()).filter(u => u.length > 0))];
+        const users = await emailDao.getUsersByUsernames(usernames);
+
+        if (!users.length) throw new Error("Không tìm thấy người nhận hợp lệ.");
+
+        const recipientList = users.map(u => ({
+            emailId: email.id,
+            userId: u.id,
+            sendTime: new Date()
+        }));
+
+        await emailDao.addRecipients(recipientList, t);
+
+        await t.commit();
+
+        res.render("pages/emails/sendEmail", {
+            success: "Gửi email thành công!",
+            user: req.session.user,
+            title: "Soạn Email",
+            stats: await userDao.getUnreadStats(userId)
+        });
+
+    } catch (error) {
+        await t.rollback();
+
+        res.render("pages/emails/sendEmail", {
+            error: "Không thể gửi email! " + error.message,
+            user: req.session.user,
+            title: "Soạn Email",
+            stats: { unread: 0 }
+        });
+    }
+};
+
+
+// [GET] /email/sent
+export const sent = async(req, res) => {
+    if (!req.session.user) return res.redirect("/auth/login");
+
+    try {
+        const userId = req.session.user.id;
+
+        // Lấy emails + recipients đã join sẵn
+        const emailsWithRecipients = await emailDao.getSentEmailsWithRecipients(userId);
+
+        res.render("pages/emails/sent", {
+            emails: emailsWithRecipients,
+            user: req.session.user,
+            title: "Email đã gửi",
+            currentPage: "sent",
+            stats: { totalSent: emailsWithRecipients.length }
+        });
     } catch (error) {
         console.error("Lỗi khi tải danh sách email đã gửi:", error);
         res.render("pages/emails/sent", {

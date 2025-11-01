@@ -1,4 +1,4 @@
-/*import { DataTypes } from "sequelize";
+import { DataTypes } from "sequelize";
 
 export default (sequelize) => {
     const EmailRecipient = sequelize.define("EmailRecipient", {
@@ -11,9 +11,9 @@ export default (sequelize) => {
     }, { timestamps: true });
 
     return EmailRecipient;
-};*/
+};
 
-import { DataTypes } from "sequelize";
+/*import { DataTypes } from "sequelize";
 
 export default (sequelize) => {
     const EmailRecipient = sequelize.define("EmailRecipient", {
@@ -37,4 +37,4 @@ export default (sequelize) => {
     }, { timestamps: true });
 
     return EmailRecipient;
-};
+};*/
