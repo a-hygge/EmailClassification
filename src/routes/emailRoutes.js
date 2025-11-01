@@ -16,6 +16,12 @@ router.get('/:id', show);
 // GET /emails/:id/:labelId - Chi tiết email với label
 router.get('/:id/:labelId', show);
 
+// GET /emails/:id/:labelId - Chi tiết email với label
+router.get('/:id/:labelId', show);
+
+// GET /emails/:id/:labelId - Chi tiết email với label
+router.get('/:id/:labelId', show);
+
 // PUT /emails/:id/read - Đánh dấu đã đọc
 router.put('/:id/read', markAsRead);
 

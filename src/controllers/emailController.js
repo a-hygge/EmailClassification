@@ -118,272 +118,150 @@ class EmailController {
           totalPages: Math.ceil(count / limit),
           totalEmails: count
         }
+      });
+    } catch (error) {
+      console.error('Important emails error:', error);
+      res.status(500).send('Server Error');
+    }
+  }
+
+  // GET /emails/:id - Chi tiết email
+  async show(req, res) {
+    try {
+      const userId = req.session.user.id;
+      const emailId = parseInt(req.params.id);
+      const stats = req.session.stats || {};
+      const labels = req.session.labels || [];
+
+      const emailRecipient = await emailDAO.findEmailRecipient(userId, emailId);
+
+      if (!emailRecipient) {
+        return res.status(404).send('Email not found');
       }
 
-    // GET /emails/label/:labelId - Lọc email theo label
-    async getByLabel(req, res) {
-        try {
-          const userId = req.session.user.id;
-          const labelId = parseInt(req.params.labelId);
-          const page = parseInt(req.query.page) || 1;
-          const limit = 20;
-          const offset = (page - 1) * limit;
-          const stats = req.session.stats || {};
+      const selectedLabelId = req.params.labelId ? parseInt(req.params.labelId) : null;
+      const selectedLabel = selectedLabelId
+        ? await emailDAO.findLabelById(selectedLabelId)
+        : null;
 
-          // GET /emails/:id - Chi tiết email
-          async show(req, res) {
-            try {
-              const userId = req.session.user.id;
-              const emailId = parseInt(req.params.id);
-              const stats = req.session.stats || {};
-              const labels = req.session.labels || [];
+      // Đánh dấu đã đọc
+      if (emailRecipient.isRead === 0) {
+        await emailDAO.markAsRead(emailRecipient);
+      }
 
-              const emailRecipient = await emailDAO.findEmailRecipient(userId, emailId);
+      res.render('pages/emails/emailDetail', {
+        title: emailRecipient.email.title,
+        layout: 'layouts/main',
+        currentPage: 'emails',
+        emailRecipient,
+        labels: labels,
+        stats: stats,
+        selectedLabel: selectedLabel
+      });
 
-              const labelsWithCount = await Promise.all(
-                allLabels.map(async (label) => {
-                  const emailCount = await EmailRecipient.count({
-                    where: { userId },
-                    include: [{
-                      model: Email,
-                      as: 'email',
-                      where: { labelId: label.id }
-                    }]
-                  });
+    } catch (error) {
+      console.error('Email show error:', error);
+      res.status(500).send('Server Error');
+    }
+  }
 
-                  const selectedLabelId = req.params.labelId ? parseInt(req.params.labelId) : null;
-                  const selectedLabel = selectedLabelId
-                    ? await emailDAO.findLabelById(selectedLabelId)
-                    : null;
+  // PUT /emails/:id/read - Đánh dấu đã đọc
+  async markAsRead(req, res) {
+    try {
+      const userId = req.session.user.id;
+      const emailId = parseInt(req.params.id);
 
-                  // Đánh dấu đã đọc
-                  if (emailRecipient.isRead === 0) {
-                    await emailDAO.markAsRead(emailRecipient);
-                  }
+      const emailRecipient = await emailDAO.findSimpleEmailRecipient(userId, emailId);
 
-                  res.render('pages/emails/emailDetail', {
-                    title: emailRecipient.email.title,
-                    layout: 'layouts/main',
-                    currentPage: 'emails',
-                    emailRecipient,
-                    labels: labels,
-                    stats: stats,
-                    selectedLabel: selectedLabel
-                  });
+      if (!emailRecipient) {
+        return res.status(404).json({ success: false, message: 'Email not found' });
+      }
 
-                  res.render('pages/emails/emails', {
-                    title: `${selectedLabel.name} - Email Classification System`,
-                    layout: 'layouts/main',
-                    currentPage: 'emails',
-                    emails: emailRecipients,
-                    labels: labelsWithCount,
-                    stats: stats,
-                    pagination: {
-                      currentPage: page,
-                      totalPages: Math.ceil(count / limit),
-                      totalEmails: count
-                    },
-                    selectedLabel
-                  });
+      await emailDAO.markAsRead(emailRecipient);
 
-                } catch (error) {
-                  console.error('Email by label error:', error);
-                  res.status(500).send('Server Error');
-                }
-            }
+      res.json({ success: true, message: 'Đã đánh dấu đã đọc' });
 
-    // GET/emails/important - Danh sách email quan trọng
-    async getImportantEmails(req, res) {
-              try {
-                const userId = req.session.user.id;
-                const page = parseInt(req.query.page) || 1;
-                const limit = 20;
-                const offset = (page - 1) * limit;
-                const stats = req.session.stats || {};
-                const labelsWithCount = req.session.labelsWithCount || [];
+    } catch (error) {
+      console.error('Mark as read error:', error);
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  }
 
-                const emailRecipient = await emailDAO.findSimpleEmailRecipient(userId, emailId);
+  // PUT /emails/:id/important - Toggle quan trọng
+  async toggleImportant(req, res) {
+    try {
+      const userId = req.session.user.id;
+      const emailId = parseInt(req.params.id);
 
-                if (!emailRecipient) {
-                  return res.status(404).json({ success: false, message: 'Email not found' });
-                }
+      const emailRecipient = await emailDAO.findSimpleEmailRecipient(userId, emailId);
 
-                await emailDAO.markAsRead(emailRecipient);
+      if (!emailRecipient) {
+        return res.status(404).json({ success: false, message: 'Email not found' });
+      }
 
-                res.json({ success: true, message: 'Đã đánh dấu đã đọc' });
+      const newValue = emailRecipient.isImportant === 1 ? 0 : 1;
+      await emailDAO.toggleImportant(emailRecipient, newValue);
 
-              } catch (error) {
-                console.error('Mark as read error:', error);
-                res.status(500).json({ success: false, message: 'Server error' });
-              }
+      res.json({
+        success: true,
+        message: newValue === 1 ? 'Đã đánh dấu quan trọng' : 'Đã bỏ đánh dấu quan trọng',
+        isImportant: newValue
+      });
 
+    } catch (error) {
+      console.error('Toggle important error:', error);
+      res.status(500).json({ success: false, message: 'Server error' });
+    }
+  }
 
-              const emailRecipient = await emailDAO.findSimpleEmailRecipient(userId, emailId);
+  // DELETE /emails/:emailId - Xoá email
+  async deleteEmail(req, res) {
+    const transaction = await db.sequelize.transaction();
+    try {
+      const emailId = parseInt(req.params.emailId);
+      const userId = req.session.user.id;
 
-              const emailRecipient = await EmailRecipient.findOne({
-                where: {
-                  userId,
-                  emailId
-                },
-                include: [{
-                  model: Email,
-                  as: 'email',
-                  include: [{
-                    model: Label,
-                    as: 'Label'
-                  },
-                  {
-                    model: User,
-                    as: 'user',
-                    attributes: ['id', 'username']
-                  }
-                  ]
-                }]
-              });
+      // Xoá bản ghi trong EmailRecipient
+      const emailRecipient = await emailDAO.findEmailRecipientForDelete(emailId, userId);
 
-              const newValue = emailRecipient.isImportant === 1 ? 0 : 1;
-              await emailDAO.toggleImportant(emailRecipient, newValue);
+      if (!emailRecipient) {
+        await transaction.rollback();
+        return res.status(404).json({ success: false, message: 'Email not found' });
+      }
 
-              const selectedLabelId = req.params.labelId ? parseInt(req.params.labelId) : null;
-              const selectedLabel = selectedLabelId ?
-                await Label.findByPk(selectedLabelId) :
-                null;
+      // Xóa trong EmailRecipient trước
+      await emailDAO.deleteEmailRecipient(emailId, transaction);
 
-              // Đánh dấu đã đọc
-              if (emailRecipient.isRead === 0) {
-                await emailRecipient.update({ isRead: 1 });
-              }
+      // Đếm số người nhận còn lại
+      const remainingRecipients = await emailDAO.countRemainingRecipients(emailId, transaction);
 
-              res.render('pages/emails/emailDetail', {
-                title: emailRecipient.email.title,
-                layout: 'layouts/main',
-                currentPage: 'emails',
-                emailRecipient,
-                labels: labelsWithCount,
-                stats: stats,
-                selectedLabel: selectedLabel
-              });
+      // Xóa email gốc (nếu không còn người nhận nào khác)
+      if (remainingRecipients === 0) {
+        await emailDAO.deleteEmail(emailId, transaction);
+      }
 
-            } catch (error) {
-              console.error('Email show error:', error);
-              res.status(500).send('Server Error');
-            }
-          }
-
-    // PUT /emails/:id/read - Đánh dấu đã đọc
-    async markAsRead(req, res) {
-            try {
-              const userId = req.session.user.id;
-              const emailId = parseInt(req.params.id);
-
-              // Xoá bản ghi trong EmailRecipient
-              const emailRecipient = await emailDAO.findEmailRecipientForDelete(emailId, userId);
-
-              if (!emailRecipient) {
-                return res.status(404).json({ success: false, message: 'Email not found' });
-              }
-
-              // Xóa trong EmailRecipient trước
-              await emailDAO.deleteEmailRecipient(emailId, transaction);
-
-              // Đếm số người nhận còn lại
-              const remainingRecipients = await emailDAO.countRemainingRecipients(emailId, transaction);
-
-
-              // Xóa email gốc (nếu không còn người nhận nào khác)
-              if (remainingRecipients === 0) {
-                await emailDAO.deleteEmail(emailId, transaction);
-              }
-
-              await transaction.commit();
-              res.json({ success: true, message: 'Email đã được xóa thành công' });
-            }
-
-    // PUT /emails/:id/important - Toggle quan trọng
-    async toggleImportant(req, res) {
-              try {
-                const userId = req.session.user.id;
-                const emailId = parseInt(req.params.id);
-
-                const emailRecipient = await EmailRecipient.findOne({
-                  where: { userId, emailId }
-                });
-
-                if (!emailRecipient) {
-                  return res.status(404).json({ success: false, message: 'Email not found' });
-                }
-
-                const newValue = emailRecipient.isImportant === 1 ? 0 : 1;
-                await emailRecipient.update({ isImportant: newValue });
-
-                res.json({
-                  success: true,
-                  message: newValue === 1 ? 'Đã đánh dấu quan trọng' : 'Đã bỏ đánh dấu quan trọng',
-                  isImportant: newValue
-                });
-
-              } catch (error) {
-                console.error('Toggle important error:', error);
-                res.status(500).json({ success: false, message: 'Server error' });
-              }
-            }
-
-    // DELETE /emails/:emailId - Xoá email
-    async deleteEmail(req, res) {
-              const transaction = await db.sequelize.transaction();
-              try {
-                const emailId = parseInt(req.params.emailId);
-                const userId = req.session.user.id;
-
-                // Xoá bản ghi trong EmailRecipient
-                const emailRecipient = await EmailRecipient.findOne({
-                  where: { emailId, userId }
-                });
-
-                if (!emailRecipient) {
-                  await transaction.rollback();
-                  return res.status(404).json({ success: false, message: 'Email not found' });
-                }
-
-                // Xóa trong EmailRecipient trước
-                await EmailRecipient.destroy({
-                  where: { emailId },
-                  transaction: transaction
-                });
-
-                // Sau đó xóa email gốc (nếu không còn người nhận nào khác)
-                const remainingRecipients = await EmailRecipient.count({
-                  where: { emailId },
-                  transaction: transaction
-                });
-
-                if (remainingRecipients === 0) {
-                  await Email.destroy({
-                    where: { id: emailId },
-                    transaction: transaction
-                  });
-                }
-
-                await transaction.commit();
-                res.json({ success: true, message: 'Email đã được xóa thành công' });
-              } catch (error) {
-                await transaction.rollback();
-                console.error('Delete email error:', error);
-                res.status(500).json({ success: false, message: 'Server error khi xóa email' });
-              }
-            }
-          }
+      await transaction.commit();
+      res.json({ success: true, message: 'Email đã được xóa thành công' });
+    }
+    catch (error) {
+      await transaction.rollback();
+      console.error('Delete email error:', error);
+      res.status(500).json({ success: false, message: 'Server error khi xóa email' });
+    }
+  }
+}
 
 const emailController = new EmailController();
 
-          export const {
-            index,
-            getByLabel,
-            show,
-            markAsRead,
-            toggleImportant,
-            deleteEmail,
-            getImportantEmails
-          } = emailController;
+export const {
+  index,
+  getByLabel,
+  show,
+  markAsRead,
+  toggleImportant,
+  deleteEmail,
+  getImportantEmails
+} = emailController;
 
-          export default emailController;
+export default emailController;
+

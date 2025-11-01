@@ -23,7 +23,7 @@
       <!-- Email gửi -->
       <li class="nav-item">
         <a class="nav-link <%= (typeof currentPage !== 'undefined' && currentPage === 'sent') ? 'active' : '' %>"
-          href="/email/sent">
+          href="/sendEmail/sent">
           <i class="fas fa-paper-plane me-2"></i>
           <span>Email gửi</span>
         </a>
@@ -74,58 +74,17 @@
       </ul>
     </div>
 
-    <hr>
 
-    <!-- Other Actions -->
-    <ul class="nav flex-column">
-      <li class="nav-item">
-        <a class="nav-link <%= (typeof currentPage !== 'undefined' && currentPage === 'emailsSystem') ? 'active' : '' %>"
-          href="/emailsSystem">
-          <i class="fas fa-envelope me-2"></i>
-          <span>List Email System</span>
-        </a>
-      </li>
-
-      <!-- Datasets -->
-      <li class="nav-item">
-        <a class="nav-link" href="/datasets">
-          <i class="fas fa-database me-2"></i>
-          <span>Dataset</span>
-        </a>
-      </li>
-
-      <!-- ML Models -->
-      <li class="nav-item">
-        <a class="nav-link" href="/models">
-          <i class="fas fa-brain me-2"></i>
-          <span>ML Models</span>
-        </a>
-      </li>
-
-      <!-- Settings -->
-      <li class="nav-item">
-        <a class="nav-link" href="/settings">
-          <i class="fas fa-cog me-2"></i>
-          <span>Cài đặt</span>
-        </a>
-      </li>
-    </ul>
   </div>
 
   <hr>
 
   <!-- Other Actions -->
   <ul class="nav flex-column">
-    <li class="nav-item">
-      <a class="nav-link <%= currentPage === 'emailsSystem' ? 'active' : '' %>" href="/emailsSystem">
-        <i class="fas fa-envelope me-2"></i>
-        <span>List Email System</span>
-      </a>
-    </li>
-
     <!-- Test Classification -->
     <li class="nav-item">
-      <a class="nav-link <%= currentPage === 'test' ? 'active' : '' %>" href="/test/classify">
+      <a class="nav-link <%= (typeof currentPage !== 'undefined' && currentPage === 'test') ? 'active' : '' %>"
+        href="/test/classify">
         <i class="fas fa-flask me-2"></i>
         <span>Test Classification</span>
       </a>
@@ -133,33 +92,10 @@
 
     <!-- Retrain Model -->
     <li class="nav-item">
-      <a class="nav-link <%= currentPage === 'retrain' ? 'active' : '' %>" href="/retrain">
+      <a class="nav-link <%= (typeof currentPage !== 'undefined' && currentPage === 'retrain') ? 'active' : '' %>"
+        href="/retrain">
         <i class="fas fa-sync-alt me-2"></i>
         <span>Retrain Model</span>
-      </a>
-    </li>
-
-    <!-- Datasets -->
-    <li class="nav-item">
-      <a class="nav-link" href="/datasets">
-        <i class="fas fa-database me-2"></i>
-        <span>Dataset</span>
-      </a>
-    </li>
-
-    <!-- ML Models -->
-    <li class="nav-item">
-      <a class="nav-link" href="/models">
-        <i class="fas fa-brain me-2"></i>
-        <span>ML Models</span>
-      </a>
-    </li>
-
-    <!-- Settings -->
-    <li class="nav-item">
-      <a class="nav-link" href="/settings">
-        <i class="fas fa-cog me-2"></i>
-        <span>Cài đặt</span>
       </a>
     </li>
   </ul>

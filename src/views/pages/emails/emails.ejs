@@ -201,8 +201,7 @@
                             <i class="fas fa-inbox fa-3x text-muted mb-3 d-block"></i>
                             <p class="text-muted mb-2 h5">
                               <% if (selectedLabel) { %>
-                                Không có email nào trong danh mục "
-                                <%= selectedLabel.name %>"
+                                Không có email nào trong danh mục "<%= selectedLabel.name %>"
                                   <% } else { %>
                                     Chưa có email nào
                                     <% } %>
@@ -262,7 +261,7 @@
 
 <script>
   // Select all checkbox
-  document.getElementById('selectAll') ? .addEventListener('change', function () {
+  document.getElementById('selectAll')?.addEventListener('change', function () {
     const checkboxes = document.querySelectorAll('.email-checkbox');
     checkboxes.forEach(checkbox => checkbox.checked = this.checked);
   });
@@ -360,7 +359,7 @@
   });
 
   // Sync emails button
-  document.getElementById('syncEmailsBtn') ? .addEventListener('click', function () {
+  document.getElementById('syncEmailsBtn')?.addEventListener('click', function () {
     this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Đang đồng bộ...';
     this.disabled = true;
     // Implement sync functionality
@@ -370,7 +369,7 @@
     }, 2000);
   });
 
-  document.getElementById('emptyStateSync') ? .addEventListener('click', function () {
+  document.getElementById('emptyStateSync')?.addEventListener('click', function () {
     this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Đang đồng bộ...';
     this.disabled = true;
     // Implement sync functionality
