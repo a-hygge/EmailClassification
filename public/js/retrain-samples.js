@@ -1,12 +1,118 @@
 let allSamples = [];
 let selectedSampleIds = new Set();
 let allLabels = [];
+let allModels = [];
+let selectedModel = null;
+let existingDatasetEmailIds = [];
 
 let pagination = {
   currentPage: 1,
   itemsPerPage: 20,
   totalItems: 0
 };
+
+// ============ MODEL SELECTION ============
+
+async function loadModels() {
+  try {
+    const response = await fetch('/retrain/models', {
+      credentials: 'include'
+    });
+    const data = await response.json();
+
+    if (data.success) {
+      allModels = data.models;
+      populateModelSelect(data.models);
+    } else {
+      showError('Failed to load models');
+    }
+  } catch (error) {
+    console.error('Error loading models:', error);
+    showError('Error loading models: ' + error.message);
+  }
+}
+
+function populateModelSelect(models) {
+  const select = document.getElementById('modelSelect');
+  if (!select) return;
+
+  // Clear existing options except first one
+  select.innerHTML = '<option value="">-- Chọn model --</option>';
+
+  models.forEach(model => {
+    const option = document.createElement('option');
+    option.value = model.id;
+    option.textContent = `${model.name} - v${model.version} (Accuracy: ${(model.accuracy * 100).toFixed(2)}%)`;
+    select.appendChild(option);
+  });
+}
+
+async function onModelSelected() {
+  const select = document.getElementById('modelSelect');
+  const modelId = select.value;
+
+  if (!modelId) {
+    selectedModel = null;
+    document.getElementById('modelInfo').style.display = 'none';
+    selectedSampleIds.clear();
+    renderCurrentPage();
+    updateSelectionInfo();
+    return;
+  }
+
+  try {
+    // Load model info và datasets
+    const response = await fetch(`/retrain/model/${modelId}/info`, {
+      credentials: 'include'
+    });
+    const data = await response.json();
+
+    if (data.success) {
+      selectedModel = data.model;
+      existingDatasetEmailIds = data.existingEmailIds || [];
+
+      // Hiển thị thông tin model
+      displayModelInfo(data.model, data.datasets);
+
+      // Tự động chọn các emails từ dataset cũ
+      selectedSampleIds.clear();
+      existingDatasetEmailIds.forEach(id => selectedSampleIds.add(id));
+
+      // Render lại table với các emails đã được chọn
+      renderCurrentPage();
+      updateSelectionInfo();
+    } else {
+      showError('Failed to load model info');
+    }
+  } catch (error) {
+    console.error('Error loading model info:', error);
+    showError('Error loading model info: ' + error.message);
+  }
+}
+
+function displayModelInfo(model, datasets) {
+  const modelInfo = document.getElementById('modelInfo');
+  if (!modelInfo) return;
+
+  document.getElementById('modelVersion').textContent = model.version || 'N/A';
+  document.getElementById('modelAccuracy').textContent = model.accuracy ? (model.accuracy * 100).toFixed(2) : 'N/A';
+  document.getElementById('modelPrecision').textContent = model.precision ? (model.precision * 100).toFixed(2) : 'N/A';
+  document.getElementById('modelRecall').textContent = model.recall ? (model.recall * 100).toFixed(2) : 'N/A';
+  document.getElementById('modelF1Score').textContent = model.f1Score ? (model.f1Score * 100).toFixed(2) : 'N/A';
+  document.getElementById('modelCreated').textContent = model.createdAt ? new Date(model.createdAt).toLocaleString('vi-VN') : 'N/A';
+
+  // Dataset info
+  let datasetInfo = 'Chưa có dataset';
+  if (datasets && datasets.length > 0) {
+    const dataset = datasets[0];
+    datasetInfo = `${dataset.name} (${dataset.quantity} emails)`;
+  }
+  document.getElementById('currentDatasetInfo').textContent = datasetInfo;
+
+  modelInfo.style.display = 'block';
+}
+
+// ============ SAMPLES SELECTION ============
 
 async function loadSamples() {
   try {
@@ -267,11 +373,21 @@ function goToPage(page) {
 }
 
 function continueToConfig() {
+  if (!selectedModel) {
+    alert('Vui lòng chọn model để retrain');
+    return;
+  }
+
   if (selectedSampleIds.size < 10) {
     alert('Vui lòng chọn ít nhất 10 mẫu để tiếp tục');
     return;
   }
+
+  // Lưu thông tin vào sessionStorage
   sessionStorage.setItem('selectedSamples', JSON.stringify([...selectedSampleIds]));
+  sessionStorage.setItem('selectedModelId', selectedModel.id);
+  sessionStorage.setItem('isRetrain', 'true'); // Flag để biết đây là retrain
+
   window.location.href = '/retrain/config';
 }
 
@@ -286,7 +402,10 @@ function showError(message) {
 }
 document.addEventListener('DOMContentLoaded', () => {
   if (window.location.pathname.includes('/retrain')) {
+    // Load models và samples
+    loadModels();
     loadSamples();
+
     const searchInput = document.getElementById('searchSamples');
     if (searchInput) {
       searchInput.addEventListener('input', (e) => {

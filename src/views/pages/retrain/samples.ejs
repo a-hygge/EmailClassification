@@ -48,6 +48,61 @@
     </div>
   </div>
 
+  <!-- Chọn Model -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="row mb-3">
+            <div class="col-12">
+              <h5 class="mb-3">
+                <i class="fas fa-brain me-2"></i>
+                Bước 1: Chọn Model để Retrain
+              </h5>
+              <p class="text-muted">
+                Chọn model đã có sẵn để retrain. Datasets đã sử dụng cho model này sẽ được tự động chọn.
+              </p>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Chọn Model <span class="text-danger">*</span></label>
+              <select class="form-select" id="modelSelect" onchange="onModelSelected()">
+                <option value="">-- Chọn model --</option>
+              </select>
+              <div class="form-text">Chọn model bạn muốn retrain</div>
+            </div>
+          </div>
+
+          <!-- Model Info -->
+          <div id="modelInfo" class="row mt-4" style="display: none;">
+            <div class="col-12">
+              <div class="alert alert-info">
+                <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Thông tin Model</h6>
+                <div class="row">
+                  <div class="col-md-6">
+                    <p class="mb-1"><strong>Version:</strong> <span id="modelVersion"></span></p>
+                    <p class="mb-1"><strong>Accuracy:</strong> <span id="modelAccuracy"></span>%</p>
+                    <p class="mb-1"><strong>Precision:</strong> <span id="modelPrecision"></span>%</p>
+                  </div>
+                  <div class="col-md-6">
+                    <p class="mb-1"><strong>Recall:</strong> <span id="modelRecall"></span>%</p>
+                    <p class="mb-1"><strong>F1-Score:</strong> <span id="modelF1Score"></span>%</p>
+                    <p class="mb-1"><strong>Created:</strong> <span id="modelCreated"></span></p>
+                  </div>
+                </div>
+                <hr>
+                <p class="mb-0"><strong>Dataset hiện tại:</strong> <span id="currentDatasetInfo"></span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chọn Samples -->
   <div class="row">
     <div class="col-12">
       <div class="card border-0 shadow-sm">
@@ -56,10 +111,10 @@
             <div class="col-12">
               <h5 class="mb-3">
                 <i class="fas fa-database me-2"></i>
-                Chọn mẫu dữ liệu huấn luyện
+                Bước 2: Chọn Datasets để Retrain
               </h5>
               <p class="text-muted">
-                Chọn ít nhất 10 email để sử dụng làm dữ liệu huấn luyện. Bạn có thể lọc theo nhãn hoặc tìm kiếm.
+                Datasets của model đã được chọn sẵn. Bạn có thể thêm thêm email để mở rộng dataset (tối thiểu 10 email).
               </p>
             </div>
           </div>

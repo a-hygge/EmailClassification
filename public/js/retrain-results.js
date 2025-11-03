@@ -190,54 +190,108 @@ async function saveTrainedModel() {
     alert('Không tìm thấy job ID');
     return;
   }
-  
-  const modelName = prompt('Nhập tên version cho model (ví dụ: 2.0.0):', `v${Date.now()}`);
-  if (!modelName) return;
-  
-  const datasetName = prompt('Nhập tên cho dataset:', `dataset_${new Date().toISOString().split('T')[0]}`);
-  if (!datasetName) return;
-  
-  const datasetDescription = prompt('Nhập mô tả cho dataset (optional):', 'Training dataset for email classification');
+
+  // Kiểm tra xem có phải retrain không
+  const isRetrain = sessionStorage.getItem('isRetrain') === 'true';
+  const retrainModelId = sessionStorage.getItem('retrainModelId');
+  const selectedSamples = JSON.parse(sessionStorage.getItem('selectedSamples') || '[]');
   
   try {
     const saveBtn = document.getElementById('saveModelBtn');
     if (saveBtn) {
       saveBtn.disabled = true;
-      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang lưu Model và Dataset...';
+      saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang lưu...';
     }
-    
-    const response = await fetch(`/retrain/save/${currentJobId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ 
-        modelName,
-        datasetName,
-        datasetDescription: datasetDescription || 'Training dataset'
-      })
-    });
-    
-    const result = await response.json();
-    
+
+    let response, result;
+
+    if (isRetrain && retrainModelId) {
+      // Ghi đè model cũ
+      response = await fetch(`/retrain/model/save/${currentJobId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          modelId: parseInt(retrainModelId),
+          sampleIds: selectedSamples
+        })
+      });
+
+      result = await response.json();
+
+      if (result.success) {
+        alert(
+          '✅ Ghi đè model thành công!\n\n' +
+          '📦 Model: ' + result.model.version + '\n' +
+          '   - Path: ' + result.model.path + '\n' +
+          '   - Accuracy: ' + (result.model.accuracy * 100).toFixed(2) + '%'
+        );
+      }
+    } else {
+      // Tạo model mới
+      const modelName = prompt('Nhập tên version cho model (ví dụ: 2.0.0):', `v${Date.now()}`);
+      if (!modelName) {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Lưu mô hình';
+        }
+        return;
+      }
+
+      const datasetName = prompt('Nhập tên cho dataset:', `dataset_${new Date().toISOString().split('T')[0]}`);
+      if (!datasetName) {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Lưu mô hình';
+        }
+        return;
+      }
+
+      const datasetDescription = prompt('Nhập mô tả cho dataset (optional):', 'Training dataset for email classification');
+
+      response = await fetch(`/retrain/save/${currentJobId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          modelName,
+          datasetName,
+          datasetDescription: datasetDescription || 'Training dataset'
+        })
+      });
+
+      result = await response.json();
+
+      if (result.success) {
+        alert(
+          '✅ Lưu thành công!\n\n' +
+          '📦 Model: ' + result.model.version + '\n' +
+          '   - Path: ' + result.model.path + '\n' +
+          '   - Accuracy: ' + (result.model.accuracy * 100).toFixed(2) + '%\n\n' +
+          '📊 Dataset: ' + result.dataset.name + '\n' +
+          '   - Samples: ' + result.dataset.quantity + ' emails\n' +
+          '   - Description: ' + result.dataset.description
+        );
+      }
+    }
+
     if (result.success) {
-      alert(
-        '✅ Lưu thành công!\n\n' +
-        '📦 Model: ' + result.model.version + '\n' +
-        '   - Path: ' + result.model.path + '\n' +
-        '   - Accuracy: ' + (result.model.accuracy * 100).toFixed(2) + '%\n\n' +
-        '📊 Dataset: ' + result.dataset.name + '\n' +
-        '   - Samples: ' + result.dataset.quantity + ' emails\n' +
-        '   - Description: ' + result.dataset.description
-      );
-      
       if (saveBtn) {
         saveBtn.innerHTML = '<i class="fas fa-check me-2"></i>Đã lưu thành công';
         saveBtn.classList.remove('btn-success');
         saveBtn.classList.add('btn-secondary');
       }
-      
+
+      // Clear session storage
+      sessionStorage.removeItem('selectedSamples');
+      sessionStorage.removeItem('selectedModelId');
+      sessionStorage.removeItem('isRetrain');
+      sessionStorage.removeItem('retrainModelId');
+
       setTimeout(() => {
         if (confirm('Bạn có muốn quay lại Dashboard?')) {
           window.location.href = '/dashboard';
@@ -245,7 +299,7 @@ async function saveTrainedModel() {
       }, 1000);
     } else {
       alert(' Lỗi khi lưu: ' + result.error);
-      
+
       if (saveBtn) {
         saveBtn.disabled = false;
         saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Lưu mô hình';
@@ -254,7 +308,7 @@ async function saveTrainedModel() {
   } catch (error) {
     console.error('Error saving model:', error);
     alert(' Lỗi khi lưu: ' + error.message);
-    
+
     const saveBtn = document.getElementById('saveModelBtn');
     if (saveBtn) {
       saveBtn.disabled = false;
@@ -264,7 +318,11 @@ async function saveTrainedModel() {
 }
 
 function trainAgain() {
+  // Clear all session storage
   sessionStorage.removeItem('selectedSamples');
+  sessionStorage.removeItem('selectedModelId');
+  sessionStorage.removeItem('isRetrain');
+  sessionStorage.removeItem('retrainModelId');
   window.location.href = '/retrain';
 }
 

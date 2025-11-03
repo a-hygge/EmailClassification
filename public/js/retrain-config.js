@@ -1,5 +1,7 @@
 let currentJobId = null;
 let pollingInterval = null;
+let isRetrain = false;
+let selectedModelId = null;
 
 function backToSamples() {
   window.location.href = '/retrain';
@@ -36,17 +38,30 @@ function validateConfiguration() {
 
 function getConfiguration() {
   const selectedSamples = JSON.parse(sessionStorage.getItem('selectedSamples') || '[]');
-  const modelType = document.getElementById('modelType');
-  const modelValue = modelType.value;
+
+  let modelId, modelType;
+
+  if (isRetrain) {
+    // Retrain: sử dụng model đã chọn
+    modelId = selectedModelId;
+    modelType = document.getElementById('retrainModelType').textContent;
+  } else {
+    // Train mới: lấy từ select
+    const modelSelect = document.getElementById('modelType');
+    modelId = parseInt(modelSelect.value);
+    modelType = modelSelect.options[modelSelect.selectedIndex].text;
+  }
 
   console.log(' Getting configuration:', {
-    modelValue,
+    isRetrain,
+    modelId,
+    modelType,
     selectedSamplesCount: selectedSamples.length
   });
 
   return {
-    modelId: parseInt(modelValue), 
-    modelType: modelType.options[modelType.selectedIndex].text, 
+    modelId: modelId,
+    modelType: modelType,
     sampleIds: selectedSamples,
     hyperparameters: {
       learning_rate: parseFloat(document.getElementById('learningRate').value),
@@ -83,7 +98,10 @@ async function startRetraining() {
       retrainBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang khởi tạo...';
     }
     
-    const response = await fetch('/retrain/start', {
+    // Chọn endpoint phù hợp
+    const endpoint = isRetrain ? '/retrain/model/start' : '/retrain/start';
+
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -91,11 +109,16 @@ async function startRetraining() {
       credentials: 'include',
       body: JSON.stringify(config)
     });
-    
+
     const result = await response.json();
-    
+
     if (result.success) {
       currentJobId = result.jobId;
+
+      // Lưu modelId nếu là retrain để dùng khi save
+      if (isRetrain && result.modelId) {
+        sessionStorage.setItem('retrainModelId', result.modelId);
+      }
 
       window.location.href = `/retrain/results?jobId=${currentJobId}`;
     } else {
@@ -127,9 +150,44 @@ document.addEventListener('DOMContentLoaded', () => {
     if (countElement) {
       countElement.textContent = selectedSamples.length;
     }
-    loadModelsForConfig();
+
+    // Kiểm tra xem có phải retrain không
+    isRetrain = sessionStorage.getItem('isRetrain') === 'true';
+    selectedModelId = sessionStorage.getItem('selectedModelId');
+
+    if (isRetrain && selectedModelId) {
+      // Hiển thị thông tin model đã chọn
+      loadRetrainModelInfo(selectedModelId);
+    } else {
+      // Load danh sách models để chọn
+      loadModelsForConfig();
+    }
   }
 });
+
+async function loadRetrainModelInfo(modelId) {
+  try {
+    const response = await fetch(`/retrain/model/${modelId}/info`, {
+      credentials: 'include'
+    });
+    const data = await response.json();
+
+    if (data.success && data.model) {
+      const model = data.model;
+
+      // Ẩn phần chọn model mới, hiển thị thông tin model retrain
+      document.getElementById('newModelSelect').style.display = 'none';
+      document.getElementById('retrainModelInfo').style.display = 'block';
+
+      // Điền thông tin
+      document.getElementById('retrainModelVersion').textContent = model.version || 'N/A';
+      document.getElementById('retrainModelType').textContent = model.version || 'N/A';
+      document.getElementById('retrainModelAccuracy').textContent = model.accuracy ? (model.accuracy * 100).toFixed(2) : 'N/A';
+    }
+  } catch (error) {
+    console.error('Error loading retrain model info:', error);
+  }
+}
 
 async function loadModelsForConfig() {
   try {

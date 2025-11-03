@@ -1,4 +1,5 @@
 import retrainService from "../services/retrainService.js";
+import modelRetrainService from "../services/modelRetrainService.js";
 import emailDao from "../dao/emailDao.js";
 import labelDao from "../dao/labelDao.js";
 import modelDao from "../dao/modelDao.js";
@@ -198,6 +199,79 @@ class RetrainController {
       res.status(500).json({ success: false, error: error.message });
     }
   }
+
+  // ============ RETRAIN MODEL CŨ ============
+
+  /**
+   * Lấy thông tin model và datasets của nó
+   * GET /retrain/model/:id/info
+   */
+  async getModelInfo(req, res) {
+    try {
+      const { id } = req.params;
+      const result = await modelRetrainService.getModelWithDatasets(parseInt(id));
+      res.json({
+        success: true,
+        ...result
+      });
+    } catch (error) {
+      console.error("Error getting model info:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  /**
+   * Bắt đầu retrain model cũ
+   * POST /retrain/model/start
+   */
+  async startModelRetraining(req, res) {
+    try {
+      if (!req.session || !req.session.user || !req.session.user.id) {
+        return res.status(401).json({
+          success: false,
+          error: "Unauthorized. Please login again.",
+        });
+      }
+
+      const userId = req.session.user.id;
+      const config = req.body;
+
+      const result = await modelRetrainService.startRetraining(userId, config);
+      res.json(result);
+    } catch (error) {
+      console.error("Error starting model retraining:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  /**
+   * Ghi đè model cũ sau khi retrain xong
+   * PUT /retrain/model/save/:jobId
+   */
+  async overwriteModel(req, res) {
+    try {
+      const { jobId } = req.params;
+      const { modelId, sampleIds } = req.body;
+
+      if (!modelId || !sampleIds || !Array.isArray(sampleIds)) {
+        return res.status(400).json({
+          success: false,
+          error: "Missing required fields: modelId, sampleIds"
+        });
+      }
+
+      const result = await modelRetrainService.overwriteModel(
+        parseInt(jobId),
+        parseInt(modelId),
+        sampleIds
+      );
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error overwriting model:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
 }
 
 const retrainController = new RetrainController();
@@ -213,6 +287,10 @@ export const {
   getTrainingResults,
   saveModel,
   getTrainingHistory,
+  // Retrain model cũ
+  getModelInfo,
+  startModelRetraining,
+  overwriteModel,
 } = retrainController;
 
 export default retrainController;
