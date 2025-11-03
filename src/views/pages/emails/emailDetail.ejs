@@ -1,0 +1,211 @@
+<!-- Content Wrapper -->
+<div class="container-fluid mt-4">
+  <!-- Back Button -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <a href="/emails" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left me-2"></i>
+        Quay lại danh sách
+      </a>
+    </div>
+  </div>
+
+  <!-- Email Detail -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <!-- Email Header -->
+        <div class="card-header bg-white border-bottom py-4">
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="flex-grow-1">
+              <!-- Email Title -->
+              <h3 class="mb-3 fw-bold">
+                <%= emailRecipient.email.title || 'No Subject' %>
+              </h3>
+
+              <!-- Sender Info -->
+              <div class="d-flex align-items-center mb-3">
+                <div class="avatar-circle me-3" style="width: 50px; height: 50px; font-size: 20px;">
+                  <%= emailRecipient.email.user?.username ? emailRecipient.email.user.username.charAt(0).toUpperCase()
+                    : 'U' %>
+                </div>
+                <div>
+                  <div class="fw-bold">
+                    <%= emailRecipient.email.user?.username || 'Unknown Sender' %>
+                  </div>
+                  <!-- <small class="text-muted">
+                    <i class="fas fa-envelope me-1"></i>
+                    <%= emailRecipient.email.sender_email || 'No email address' %>
+                  </small> -->
+                </div>
+              </div>
+
+              <!-- Email Meta Info -->
+              <div class="d-flex flex-wrap gap-3 text-muted small">
+                <div>
+                  <i class="fas fa-clock me-1"></i>
+                  <%= emailRecipient.sendTime ? new Date(emailRecipient.sendTime).toLocaleString('vi-VN', {
+                    day: '2-digit' , month: '2-digit' , year: 'numeric' , hour: '2-digit' , minute: '2-digit' }) : 'N/A'
+                    %>
+                </div>
+                <div>
+                  <i class="fas fa-tag me-1"></i>
+                  <% if (emailRecipient.email.Label) { %>
+                    <span
+                      class="badge bg-<%= ['primary', 'success', 'info', 'warning', 'danger'][emailRecipient.email.labelId % 5] %>">
+                      <%= emailRecipient.email.Label.name %>
+                    </span>
+                    <% } else { %>
+                      <span class="badge bg-secondary">Chưa phân loại</span>
+                      <% } %>
+                </div>
+                <div>
+                  <% if (emailRecipient.isRead) { %>
+                    <span class="badge bg-success">
+                      <i class="fas fa-check me-1"></i>
+                      Đã đọc
+                    </span>
+                    <% } else { %>
+                      <span class="badge bg-warning">
+                        <i class="fas fa-circle me-1"></i>
+                        Chưa đọc
+                      </span>
+                      <% } %>
+                </div>
+                <div>
+                  <% if (emailRecipient.isImportant) { %>
+                    <span class="badge bg-danger">
+                      <i class="fas fa-star me-1"></i>
+                      Quan trọng
+                    </span>
+                    <% } %>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="ms-3">
+              <div class="btn-group" role="group">
+                <button class="btn btn-outline-warning" id="toggleImportant"
+                  title="<%= emailRecipient.isImportant ? 'Bỏ đánh dấu quan trọng' : 'Đánh dấu quan trọng' %>">
+                  <i class="<%= emailRecipient.isImportant ? 'fas' : 'far' %> fa-star"></i>
+                </button>
+                <button class="btn btn-outline-danger" id="deleteEmail" title="Xóa">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Email Body -->
+        <div class="card-body p-4">
+          <div class="email-body-content">
+            <% if (emailRecipient.email.content) { %>
+              <div style="white-space: pre-wrap; line-height: 1.8;">
+                <%= emailRecipient.email.content %>
+              </div>
+              <% } else { %>
+                <p class="text-muted text-center py-5">
+                  <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                  Email này không có nội dung
+                </p>
+                <% } %>
+          </div>
+        </div>
+
+        <!-- Email Footer -->
+        <div class="card-footer bg-light border-top py-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+              <i class="fas fa-info-circle me-1"></i>
+              Email ID: #<%= emailRecipient.email.id %>
+            </small>
+            <div class="btn-group btn-group-sm" role="group">
+              <button class="btn btn-outline-primary" onclick="window.print()">
+                <i class="fas fa-print me-1"></i>
+                In
+              </button>
+              <button class="btn btn-outline-secondary" id="forwardEmail">
+                <i class="fas fa-share me-1"></i>
+                Chuyển tiếp
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const emailId = <%= emailRecipient.email.id %>;
+  const isImportant = <%= emailRecipient.isImportant ? 'true' : 'false' %>;
+
+  // Toggle important
+  document.getElementById('toggleImportant')?.addEventListener('click', async function () {
+    try {
+      const response = await fetch(`/emails/${emailId}/important`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        location.reload();
+      } else {
+        alert('Có lỗi xảy ra: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error toggling important:', error);
+      alert('Có lỗi xảy ra khi cập nhật trạng thái');
+    }
+  });
+
+  // Delete email
+  document.getElementById('deleteEmail')?.addEventListener('click', function () {
+    if (confirm('Bạn có chắc chắn muốn xóa email này?')) {
+      // Implement delete functionality
+      console.log('Delete email:', emailId);
+      // window.location.href = '/emails';
+    }
+  });
+
+  // Forward email
+  document.getElementById('forwardEmail')?.addEventListener('click', function () {
+    alert('Tính năng chuyển tiếp email sẽ được phát triển trong tương lai');
+  });
+</script>
+
+<style>
+  .email-body-content {
+    min-height: 300px;
+    font-size: 1rem;
+    color: #333;
+  }
+
+  .avatar-circle {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 20px;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  @media print {
+
+    .btn,
+    .card-footer {
+      display: none !important;
+    }
+  }
+</style>
