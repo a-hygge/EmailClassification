@@ -1,7 +1,7 @@
 import db from '../models/index.js';
 import { Op } from 'sequelize';
 
-const { Email, EmailRecipient, Label, User } = db;
+const { Email, Label, User } = db;
 
 class EmailController {
   async index(req, res) {
@@ -11,51 +11,49 @@ class EmailController {
       const page = parseInt(req.query.page) || 1;
       const limit = 20;
       const offset = (page - 1) * limit;
-      const { count, rows: emailRecipients } = await EmailRecipient.findAndCountAll({
-        where: { userId },
+
+      // Lấy email của user hiện tại (dựa vào sender hoặc receiver)
+      const userEmail = req.session.user.email; // Giả sử user có email
+
+      const { count, rows: emails } = await Email.findAndCountAll({
+        where: {
+          [Op.or]: [
+            { sender: userEmail },
+            { receiver: userEmail }
+          ]
+        },
         include: [
           {
-            model: Email,
-            as: 'email',
-            include: [
-              {
-                model: Label,
-                as: 'Label'
-              },
-              {
-                model: User,
-                as: 'user',
-                attributes: ['id', 'username']
-              }
-            ]
+            model: Label,
+            as: 'label',
+            required: false
           }
         ],
         limit,
         offset,
-        order: [['sendTime', 'DESC']]
+        order: [['id', 'DESC']]
       });
 
       // Lấy tất cả labels
       const allLabels = await Label.findAll();
 
-      // Đếm số email cho mỗi label
+      // Đếm số email cho mỗi label (của user hiện tại)
       const labelsWithCount = await Promise.all(
         allLabels.map(async (label) => {
-          const emailCount = await EmailRecipient.count({
-            where: { userId },
-            include: [
-              {
-                model: Email,
-                as: 'email',
-                where: { labelId: label.id }
-              }
-            ]
+          const emailCount = await Email.count({
+            where: {
+              tblLabelId: label.id,
+              [Op.or]: [
+                { sender: userEmail },
+                { receiver: userEmail }
+              ]
+            }
           });
 
           return {
             id: label.id,
             name: label.name,
-            emailCount
+            count: emailCount
           };
         })
       );
@@ -64,7 +62,7 @@ class EmailController {
         title: 'Hộp thư - Email Classification System',
         layout: 'layouts/main',
         currentPage: 'emails',
-        emails: emailRecipients,
+        emails: emails,
         labels: labelsWithCount,
         stats: stats,
         pagination: {
@@ -85,6 +83,7 @@ class EmailController {
   async getByLabel(req, res) {
     try {
       const userId = req.session.user.id;
+      const userEmail = req.session.user.email;
       const labelId = parseInt(req.params.labelId);
       const page = parseInt(req.query.page) || 1;
       const limit = 20;
@@ -92,29 +91,24 @@ class EmailController {
       const stats = req.session.stats || {};
 
       // Lấy email theo label
-      const { count, rows: emailRecipients } = await EmailRecipient.findAndCountAll({
-        where: { userId },
+      const { count, rows: emails } = await Email.findAndCountAll({
+        where: {
+          tblLabelId: labelId,
+          [Op.or]: [
+            { sender: userEmail },
+            { receiver: userEmail }
+          ]
+        },
         include: [
           {
-            model: Email,
-            as: 'email',
-            where: { labelId },
-            include: [
-              {
-                model: Label,
-                as: 'Label'
-              },
-              {
-                model: User,
-                as: 'user',
-                attributes: ['id', 'username']
-              }
-            ]
+            model: Label,
+            as: 'label',
+            required: false
           }
         ],
         limit,
         offset,
-        order: [['sendTime', 'DESC']]
+        order: [['id', 'DESC']]
       });
 
       // Lấy tất cả labels
@@ -122,21 +116,20 @@ class EmailController {
 
       const labelsWithCount = await Promise.all(
         allLabels.map(async (label) => {
-          const emailCount = await EmailRecipient.count({
-            where: { userId },
-            include: [
-              {
-                model: Email,
-                as: 'email',
-                where: { labelId: label.id }
-              }
-            ]
+          const emailCount = await Email.count({
+            where: {
+              tblLabelId: label.id,
+              [Op.or]: [
+                { sender: userEmail },
+                { receiver: userEmail }
+              ]
+            }
           });
 
           return {
             id: label.id,
             name: label.name,
-            emailCount
+            count: emailCount
           };
         })
       );
@@ -148,7 +141,7 @@ class EmailController {
         title: `${selectedLabel.name} - Email Classification System`,
         layout: 'layouts/main',
         currentPage: 'emails',
-        emails: emailRecipients,
+        emails: emails,
         labels: labelsWithCount,
         stats: stats,
         pagination: {
@@ -166,55 +159,11 @@ class EmailController {
   }
 
   // GET/emails/important - Danh sách email quan trọng
+  // Note: Tính năng này cần bảng EmailUser với trường isImportant
+  // Tạm thời redirect về trang chính
   async getImportantEmails(req, res) {
     try {
-      const userId = req.session.user.id;
-      const page = parseInt(req.query.page) || 1;
-      const limit = 20;
-      const offset = (page - 1) * limit;
-      const stats = req.session.stats || {};
-      const labelsWithCount = req.session.labelsWithCount || [];
-
-      const { count, rows: emailRecipients } = await EmailRecipient.findAndCountAll({
-        where: {
-          userId,
-          isImportant: 1
-        },
-        include: [
-          {
-            model: Email,
-            as: 'email',
-            include: [
-              {
-                model: Label,
-                as: 'Label'
-              },
-              {
-                model: User,
-                as: 'user',
-                attributes: ['id', 'username']
-              }
-            ]
-          }
-        ],
-        limit,
-        offset,
-        order: [['sendTime', 'DESC']]
-      });
-      res.render('pages/emails/emails', {
-        title: 'Email Quan Trọng - Email Classification System',
-        layout: 'layouts/main',
-        currentPage: 'ImportantEmails',
-        emails: emailRecipients,
-        stats: stats,
-        selectedLabel: null,
-        labels: labelsWithCount,
-        pagination: {
-          currentPage: page,
-          totalPages: Math.ceil(count / limit),
-          totalEmails: count
-        }
-      });
+      return res.redirect('/emails');
     } catch (error) {
       console.error('Important emails error:', error);
       res.status(500).send('Server Error');
@@ -225,49 +174,37 @@ class EmailController {
   // GET /emails/:id - Chi tiết email
   async show(req, res) {
     try {
-      const userId = req.session.user.id;
+      const userEmail = req.session.user.email;
       const emailId = parseInt(req.params.id);
       const stats = req.session.stats || {};
       const labelsWithCount = req.session.labelsWithCount || [];
 
-      const emailRecipient = await EmailRecipient.findOne({
+      const email = await Email.findOne({
         where: {
-          userId,
-          emailId
+          id: emailId,
+          [Op.or]: [
+            { sender: userEmail },
+            { receiver: userEmail }
+          ]
         },
         include: [
           {
-            model: Email,
-            as: 'email',
-            include: [
-              {
-                model: Label,
-                as: 'Label'
-              },
-              {
-                model: User,
-                as: 'user',
-                attributes: ['id', 'username']
-              }
-            ]
+            model: Label,
+            as: 'label',
+            required: false
           }
         ]
       });
 
-      if (!emailRecipient) {
+      if (!email) {
         return res.status(404).send('Email not found');
       }
 
-      // Đánh dấu đã đọc
-      if (emailRecipient.isRead === 0) {
-        await emailRecipient.update({ isRead: 1 });
-      }
-
       res.render('pages/emails/emailDetail', {
-        title: emailRecipient.email.title,
+        title: email.title || 'Email Detail',
         layout: 'layouts/main',
         currentPage: 'emails',
-        emailRecipient,
+        email: email,
         labels: labelsWithCount,
         stats: stats,
         selectedLabel: null

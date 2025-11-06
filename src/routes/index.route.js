@@ -3,17 +3,19 @@ const router = Router();
 import authRoutes from "./authRoutes.js";
 import dashboardRoutes from "./dashboardRoutes.js";
 import emailRoutes from "./emailRoutes.js";
-import emailSystemRoutes from "./emailSystemRoute.js";
 import testRoutes from "./testRoutes.js";
 import retrainRoutes from "./retrainRoutes.js";
+import apiRoutes from "./apiRoutes.js";
 
 // Public routes
 router.use("/auth", authRoutes);
 
+// API routes (public - không cần login)
+router.use("/api", apiRoutes);
+
 // Protected routes (cần login)
 router.use("/dashboard", dashboardRoutes);
 router.use("/emails", emailRoutes);
-router.use("/emailsSystem", emailSystemRoutes);
 router.use("/test", testRoutes);
 router.use("/retrain", retrainRoutes);
 

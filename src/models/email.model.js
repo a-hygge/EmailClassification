@@ -8,8 +8,10 @@ export default (sequelize) => {
       title: { type: DataTypes.STRING(255), allowNull: true },
       content: { type: DataTypes.STRING(5000), allowNull: true },
       tblLabelId: { type: DataTypes.INTEGER, allowNull: true },
+      sender: { type: DataTypes.STRING(255), allowNull: true },
+      receiver: { type: DataTypes.STRING(255), allowNull: true },
     },
-    { 
+    {
       timestamps: false,
       tableName: 'tblEmail'
     }
