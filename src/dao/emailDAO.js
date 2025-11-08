@@ -369,7 +369,7 @@ class EmailDao {
      * @param {Object} emailData 
      * @param {Transaction} transaction 
      */
-    async createEmail(emailData, transaction) {
+    async saveEmail(emailData, transaction) {
         return Email.create(emailData, { transaction });
     }
 
@@ -392,10 +392,10 @@ class EmailDao {
             ],
             include: [{
                 model: EmailRecipient,
-                as: "recipients", // phải trùng với alias trong model association
+                as: "recipients",
                 include: [{
                     model: User,
-                    as: "user", // phải trùng với alias trong EmailRecipient.belongsTo(User)
+                    as: "user",
                     attributes: ["id", "username"]
                 }]
             }]
@@ -416,24 +416,37 @@ class EmailDao {
     }
 
 
-
-
-
     /**
      * Tìm user theo keyword
      * @param {string} keyword 
      */
     async searchUsersByKeyword(keyword) {
+            return User.findAll({
+                where: {
+                    username: {
+                        [db.Sequelize.Op.like]: `%${keyword}%`
+                    }
+                },
+                attributes: ["id", "username"],
+                limit: 10
+            });
+        }
+        /*
+            /**
+             * Lấy danh sách user theo username chính xác (dùng khi gửi email)
+             * @param {string[]} usernames
+             */
+        /*   async getSearchUser(usernames) {
+        if (!Array.isArray(usernames) || usernames.length === 0) {
+            return [];
+        }
+
         return User.findAll({
-            where: {
-                username: {
-                    [db.Sequelize.Op.like]: `%${keyword}%`
-                }
-            },
-            attributes: ["id", "username"],
-            limit: 10
+            where: { username: usernames },
+            attributes: ["id", "username"]
         });
     }
+*/
 
 }
 
