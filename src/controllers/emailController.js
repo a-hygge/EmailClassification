@@ -125,7 +125,6 @@ class EmailController {
     }
   }
 
-
   // GET /emails/:id - Chi tiết email
   async show(req, res) {
     try {
@@ -236,7 +235,6 @@ class EmailController {
       // Đếm số người nhận còn lại
       const remainingRecipients = await emailDAO.countRemainingRecipients(emailId, transaction);
 
-
       // Xóa email gốc (nếu không còn người nhận nào khác)
       if (remainingRecipients === 0) {
         await emailDAO.deleteEmail(emailId, transaction);
@@ -266,3 +264,4 @@ export const {
 } = emailController;
 
 export default emailController;
+
