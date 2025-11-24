@@ -55,18 +55,20 @@
                                                 <i class="fas fa-paper-plane text-primary"></i>
                                             </td>
 
-                                            <!-- Người nhận -->
                                             <td class="align-middle">
-                                                <% if (email.recipients && email.recipients.length > 0) { %>
-                                                    <% email.recipients.forEach((recipient, index) => { %>
-                                                        <span><%= recipient || 'Không rõ' %></span>
-                                                        <% if (index < email.recipients.length - 1) { %>,
-                                                            <% } %>
-                                                                <% }) %>
-                                                                    <% } else { %>
-                                                                        <em class="text-muted">Không có người nhận</em>
-                                                                        <% } %>
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-circle me-2">
+                                                        <%= email.receiver.charAt(0).toUpperCase() %>
+                                                    </div>
+                                                    <div>
+                                                        <div>
+                                                            <%= email.receiver %>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </td>
+
+
 
 
                                             <!-- Tiêu đề -->

@@ -1,6 +1,7 @@
 // dao/userDao.js
 import db from "../models/index.js";
-const { User, EmailRecipient } = db;
+const { User, Email } = db;
+import { Op } from "sequelize";
 
 /**
  * Lấy thông tin user theo ID
@@ -13,7 +14,6 @@ export const getUserById = async(id) => {
  * Tìm người dùng theo keyword (username)
  */
 export const searchUsersByKeyword = async(keyword, limit = 10) => {
-    const { Op } = require("sequelize");
     return User.findAll({
         where: {
             username: {
@@ -27,34 +27,38 @@ export const searchUsersByKeyword = async(keyword, limit = 10) => {
 
 /**
  * Lấy thống kê email chưa đọc
+ * (Ở đây tạm lấy count email nhận mà chưa đọc dựa vào cột 'is_read' trong Email)
  */
 export const getUnreadStats = async(userId) => {
-    const count = await EmailRecipient.count({
+    const count = await Email.count({
         where: {
-            userId,
-            isRead: 0
+            receiver_id: userId,
+            is_read: 0 // bạn cần thêm cột is_read vào Email nếu muốn track đọc
         }
     });
     return { unread: count };
 };
 
+/**
+ * Tìm user theo username chính xác
+ */
 export const findByUsername = async(username) => {
-    return await User.findOne({ where: { username } });
+    return User.findOne({ where: { username } });
 };
 
+/**
+ * Tạo user mới
+ */
 export const createUser = async(data) => {
-    return await User.create(data);
+    return User.create(data);
 };
 
 /**
  * Lấy danh sách user theo username chính xác (dùng khi gửi email)
  * @param {string[]} usernames
- * @returns {Promise<Array>}
  */
 export const getSearchUser = async(usernames) => {
-    if (!Array.isArray(usernames) || usernames.length === 0) {
-        return [];
-    }
+    if (!Array.isArray(usernames) || usernames.length === 0) return [];
 
     return User.findAll({
         where: { username: usernames },

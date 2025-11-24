@@ -10,6 +10,8 @@ import { connectDB } from './src/config/database.js';
 
 import routes from './src/routes/index.route.js';
 import sendEmailRoute from "./src/routes/sendEmailRoute.js";
+import db from './src/models/index.js'; // import toàn bộ các model
+
 
 const __filename = fileURLToPath(
     import.meta.url);
@@ -74,6 +76,8 @@ app.use((req, res) => {
         layout: 'layouts/main'
     });
 });
+
+app.set('models', db);
 
 // Start server
 const PORT = process.env.PORT || 3000;

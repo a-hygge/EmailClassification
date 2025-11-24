@@ -1,25 +1,14 @@
 import { Router } from 'express';
 const router = Router();
-import { index, getByLabel, show, markAsRead, toggleImportant, deleteEmail, getImportantEmails } from '../controllers/emailController.js';
+import { index, show, markAsRead, toggleImportant, deleteEmail } from '../controllers/emailController.js'; // bỏ getByLabel, getImportantEmails
 
 // GET /emails - Danh sách tất cả email
 router.get('/', index);
 
-// GET /emails/label/:labelId - Lọc email theo label
-router.get('/label/:labelId', getByLabel);
-
-router.get('/important', getImportantEmails);
-
 // GET /emails/:id - Chi tiết email
 router.get('/:id', show);
 
-// GET /emails/:id/:labelId - Chi tiết email với label
-router.get('/:id/:labelId', show);
-
-// GET /emails/:id/:labelId - Chi tiết email với label
-router.get('/:id/:labelId', show);
-
-// GET /emails/:id/:labelId - Chi tiết email với label
+// GET /emails/:id/:labelId - Chi tiết email với label (nếu vẫn muốn giữ param labelId)
 router.get('/:id/:labelId', show);
 
 // PUT /emails/:id/read - Đánh dấu đã đọc
