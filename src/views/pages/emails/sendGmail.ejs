@@ -1,0 +1,109 @@
+<div class="container py-4">
+    <h2 class="mb-4"><i class="fas fa-paper-plane me-2"></i> Soạn Gmail</h2>
+
+    <!-- Toast Notification -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
+        <div id="sendToast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="toastMessage"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <% if (typeof success !== 'undefined') { %>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const toastEl = document.getElementById('sendToast');
+                toastEl.classList.remove('bg-danger');
+                toastEl.classList.add('bg-success');
+                document.getElementById('toastMessage').innerHTML = '<i class="fas fa-check-circle me-2"></i><%= success %>';
+                new bootstrap.Toast(toastEl, {
+                    autohide: true,
+                    delay: 3000
+                }).show();
+            });
+        </script>
+        <% } %>
+
+            <% if (typeof error !== 'undefined') { %>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const toastEl = document.getElementById('sendToast');
+                        toastEl.classList.remove('bg-success');
+                        toastEl.classList.add('bg-danger');
+                        document.getElementById('toastMessage').innerHTML = '<i class="fas fa-exclamation-circle me-2"></i><%= error %>';
+                        new bootstrap.Toast(toastEl, {
+                            autohide: true,
+                            delay: 5000
+                        }).show();
+                    });
+                </script>
+                <% } %>
+
+                    <form action="/email/gmail" method="POST" class="card p-4 shadow-sm border-0">
+                        <!-- Recipients -->
+                        <div class="mb-3 position-relative">
+                            <label for="recipients" class="form-label">Recipients (username, comma separated):</label>
+                            <input type="text" id="recipients" name="recipients" class="form-control" placeholder="e.g., alice,bob,charlie" maxlength="200" autocomplete="off">
+                            <div id="recipientList" class="list-group position-absolute w-100" style="z-index: 1000;"></div>
+                        </div>
+
+                        <!-- Title -->
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Title:</label>
+                            <input type="text" id="title" name="title" class="form-control" placeholder="Email title" maxlength="100">
+                        </div>
+
+                        <!-- Content -->
+                        <div class="mb-3">
+                            <label for="content" class="form-label">Content:</label>
+                            <textarea id="content" name="content" class="form-control" rows="6" placeholder="Write your email..." maxlength="1000"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane me-1"></i> Send</button>
+                    </form>
+</div>
+
+<script>
+    $(document).ready(function() {
+        const $input = $('#recipients');
+        const $list = $('#recipientList');
+
+        // Gợi ý username khi gõ
+        $input.on('input', function() {
+            const keyword = $(this).val().split(',').pop().trim();
+            if (!keyword) {
+                $list.empty();
+                return;
+            }
+
+            $.get('/email/search', {
+                keyword
+            }, function(usernames) {
+                $list.empty();
+                if (Array.isArray(usernames)) {
+                    usernames.forEach(name => {
+                        $list.append(`<button type="button" class="list-group-item list-group-item-action">${name}</button>`);
+                    });
+                }
+            });
+        });
+
+        // Chọn username từ gợi ý
+        $list.on('click', 'button', function() {
+            let names = $input.val().split(',');
+            names[names.length - 1] = $(this).text();
+            $input.val(names.join(',') + ', ');
+            $list.empty();
+            $input.focus();
+        });
+
+        // Ẩn danh sách khi click ra ngoài
+        $(document).click(function(e) {
+            if (!$(e.target).closest('#recipients, #recipientList').length) {
+                $list.empty();
+            }
+        });
+    });
+</script>
